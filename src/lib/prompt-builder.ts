@@ -1,45 +1,75 @@
-// Stub — will be replaced by data-agent with full prompt builder
-import type { Architecture, Service, TrafficParams } from '#/data/types'
+import type { Architecture, Service, TrafficParams } from "#/data/types.ts"
+import { calculateCost } from "./cost.ts"
+import { formatNumber } from "./utils.ts"
 
-export function buildPrompt(params: {
-  arch: Architecture | null
-  services: Service[]
-  traffic: TrafficParams
-  selectedServices?: string[]
-}): string {
-  const { arch, services, traffic, selectedServices } = params
+/**
+ * Build a comprehensive implementation prompt string from the current explorer state.
+ *
+ * Includes: architecture description, services, data flow, gotchas per service,
+ * implementation steps, traffic constraints, and optionally the selected service detail.
+ */
+export function buildPrompt(
+  arch: Architecture,
+  services: Record<string, Service>,
+  traffic: TrafficParams,
+  selectedServiceId: string | null,
+): string {
+  const svcNames = arch.services.map((s) => services[s]?.name ?? s)
+  const cost = calculateCost(arch, traffic)
 
-  const lines: string[] = []
+  let p = "# Arquitectura: " + arch.name + "\n\n"
 
-  lines.push('=== Cloudflare Architecture Prompt ===')
-  lines.push('')
+  // Description
+  p += "## Descripción\n" + arch.desc + "\n\n"
 
-  if (arch) {
-    lines.push(`Arquitectura: ${arch.name}`)
-    lines.push(`Descripción: ${arch.desc}`)
-    lines.push(`Servicios: ${arch.services.join(', ')}`)
-    lines.push(`Flow: ${arch.flow}`)
-    lines.push('')
-  }
+  // Services
+  p += "## Servicios Cloudflare\n" + svcNames.join(", ") + "\n\n"
 
-  lines.push('--- Parámetros de tráfico ---')
-  lines.push(`Requests/día: ${traffic.rps.toLocaleString()}`)
-  lines.push(`Storage: ${traffic.storage} GB`)
-  lines.push(`AI calls/día: ${traffic.aiCalls.toLocaleString()}`)
-  lines.push(`Tenants: ${traffic.tenants}`)
-  lines.push('')
+  // Data flow
+  p += "## Flujo de datos\n```\n" + arch.flow + "\n```\n\n"
 
-  if (selectedServices && selectedServices.length > 0) {
-    lines.push('--- Servicios seleccionados ---')
-    for (const id of selectedServices) {
-      const svc = services.find((s) => s.id === id)
-      if (svc) {
-        lines.push(`• ${svc.name}: ${svc.desc}`)
-        lines.push(`  Pricing: ${svc.pricing}`)
-        lines.push(`  Gotcha: ${svc.gotcha}`)
-      }
+  // Traffic constraints
+  p += "## Restricciones de tráfico\n"
+  p += "- " + formatNumber(traffic.rps) + " requests/día (" + formatNumber(traffic.rps * 30) + " /mes)\n"
+  p += "- " + formatNumber(traffic.storage) + " GB almacenamiento\n"
+  p += "- " + formatNumber(traffic.aiCalls) + " AI calls/día\n"
+  p += "- " + traffic.tenants + " tenants\n"
+  p += "- Costo estimado: $" + cost.toFixed(0) + " USD/mes\n\n"
+
+  // Gotchas per service
+  p += "## Gotchas por servicio\n"
+  for (const sId of arch.services) {
+    const svc = services[sId]
+    if (svc) {
+      p += "- **" + svc.name + "**: " + svc.gotcha + "\n"
     }
   }
+  p += "\n"
 
-  return lines.join('\n')
+  // Implementation steps
+  if (arch.steps.length > 0) {
+    p += "## Pasos de implementación\n"
+    arch.steps.forEach((step, i) => {
+      p += (i + 1) + ". " + step + "\n"
+    })
+    p += "\n"
+  }
+
+  // Selected service detail
+  if (selectedServiceId && services[selectedServiceId]) {
+    const sel = services[selectedServiceId]
+    p += "## Servicio seleccionado: " + sel.name + "\n"
+    p += "- Uso: " + sel.use + "\n"
+    p +=
+      "- Límites clave: " +
+      sel.limits.map((l) => l.label + ": " + l.value).join(", ") +
+      "\n"
+    p += "- Pricing: " + sel.pricing + "\n\n"
+  }
+
+  // Closing instruction
+  p +=
+    "---\nImplementa esta arquitectura paso a paso en Cloudflare Workers (TypeScript). Usa wrangler para el setup. Cada paso debe ser funcional y testeable antes de pasar al siguiente."
+
+  return p
 }

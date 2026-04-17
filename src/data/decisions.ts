@@ -1,79 +1,135 @@
-// Stub — will be replaced by data-agent with full decision tree
-import type { Decision } from './types'
+import type { Decision } from "./types.ts"
 
-export const decisions: Decision[] = [
+export const DECISIONS: Decision[] = [
   {
-    question: '¿Qué tipo de aplicación estás construyendo?',
+    question: "¿Qué necesitas almacenar?",
     options: [
       {
-        label: 'API / Backend',
-        desc: 'REST o GraphQL API, microservicio, webhook handler.',
-        result: 'workers,d1,kv',
-        explanation: 'Workers como compute principal, D1 para datos relacionales, KV para cache y config.',
+        label: "Datos relacionales con SQL",
+        desc: "Tablas, joins, queries",
+        result: "d1",
+        explanation:
+          "D1: SQLite edge con SQL completo. Si necesitas >10GB o extensiones, Postgres + Hyperdrive.",
       },
       {
-        label: 'Chatbot / AI',
-        desc: 'Chatbot con contexto, RAG, o agente AI.',
-        result: 'workers,ai,vectorize,d1,r2',
-        explanation: 'Workers AI para inferencia, Vectorize para embeddings, R2 para documentos fuente.',
+        label: "Estado por entidad (user, session)",
+        desc: "Strong consistency, un writer",
+        result: "durableObjects",
+        explanation:
+          "DO: actor pattern, un DO por entidad, strong consistency sin race conditions.",
       },
       {
-        label: 'SaaS Multi-tenant',
-        desc: 'Plataforma con múltiples clientes/organizaciones.',
-        result: 'workers,durable-objects,d1,queues,access',
-        explanation: 'Durable Objects para aislamiento de tenant, D1 para datos, Access para auth zero-trust.',
+        label: "Config global / feature flags",
+        desc: "Lecturas rápidas, cambios lentos",
+        result: "kv",
+        explanation:
+          "KV: lecturas <10ms, propagación en <60s. Acepta eventual consistency.",
       },
       {
-        label: 'Sitio Web / Landing',
-        desc: 'Sitio estático, blog, landing page con funciones.',
-        result: 'pages,kv,r2',
-        explanation: 'Pages para hosting + SSR, KV para datos dinámicos, R2 para media.',
+        label: "Archivos (imágenes, PDFs, videos)",
+        desc: "Blobs de cualquier tamaño",
+        result: "r2",
+        explanation:
+          "R2: S3-compatible, cero egress. URLs firmadas. Event notifications.",
+      },
+      {
+        label: "Embeddings / búsqueda semántica",
+        desc: "Vectores, similitud, RAG",
+        result: "vectorize",
+        explanation:
+          "Vectorize para vector DB. AI Search para RAG managed sin pipeline manual.",
+      },
+      {
+        label: "Código versionado de agentes",
+        desc: "Millones de repos, Git",
+        result: "artifacts",
+        explanation:
+          "Artifacts (beta): Git-compatible, millones de repos, built para agentes.",
       },
     ],
   },
   {
-    question: '¿Qué tan crítica es la consistencia de datos?',
+    question: "¿Qué procesamiento necesitas?",
     options: [
       {
-        label: 'Eventual consistency OK',
-        desc: 'Datos pueden tardar segundos en sincronizar globalmente.',
-        result: 'kv',
-        explanation: 'KV ofrece lecturas ultra-rápidas con consistencia eventual (~60s). Ideal para cache y config.',
+        label: "Request-response HTTP",
+        desc: "API, webhook, página",
+        result: "workers",
+        explanation: "Worker con fetch handler. El building block universal.",
       },
       {
-        label: 'Consistencia fuerte',
-        desc: 'Las lecturas siempre ven la última escritura.',
-        result: 'd1,durable-objects',
-        explanation: 'D1 (SQL transaccional) o Durable Objects (estado aislado) garantizan consistencia fuerte.',
+        label: "Trabajo async confiable",
+        desc: "Procesar después, reintentos",
+        result: "queues",
+        explanation:
+          "Queue + Consumer. At-least-once con dedupe. Dead-letter para fallos.",
       },
       {
-        label: 'Mix de ambos',
-        desc: 'Datos críticos consistentes, resto eventual.',
-        result: 'd1,kv',
-        explanation: 'Patrón común: D1 para datos transaccionales, KV como cache layer.',
+        label: "Pipeline multi-paso durable",
+        desc: "Steps que sobreviven restart",
+        result: "workflows",
+        explanation:
+          "Workflows: steps persistentes, signals HITL, saga compensation.",
+      },
+      {
+        label: "Browser automation",
+        desc: "Scraping, screenshots, PDF",
+        result: "browserRun",
+        explanation: "Browser Run: Chrome headless + HITL + recordings + CDP.",
+      },
+      {
+        label: "Agente autónomo con persistencia",
+        desc: "Long-running, sub-agents",
+        result: "agentsSDK",
+        explanation:
+          "Agents SDK + Think: clase TypeScript sobre DO, execution ladder, sub-agents.",
+      },
+      {
+        label: "Tarea programada (cron)",
+        desc: "Cada X min/horas/días",
+        result: "workers",
+        explanation:
+          "Worker + Cron Trigger. Hasta 1000 crons. Para timers por-entidad: DO Alarms.",
       },
     ],
   },
   {
-    question: '¿Necesitas procesamiento asíncrono?',
+    question: "¿Qué modelo de IA necesitas?",
     options: [
       {
-        label: 'No, todo síncrono',
-        desc: 'Request-response simple, sin jobs en background.',
-        result: '',
-        explanation: 'Workers manejan bien requests síncronos. Sin necesidad de queues.',
+        label: "Razonamiento complejo / frontier",
+        desc: "Tool use avanzado, contextos largos",
+        result: "aiGateway",
+        explanation:
+          "Claude vía AI Gateway. Prompt caching 10-20x savings. Guardrails inline.",
       },
       {
-        label: 'Sí, jobs en background',
-        desc: 'Emails, reportes, procesamiento de archivos.',
-        result: 'queues',
-        explanation: 'Queues desacopla el procesamiento. Worker encola, consumer procesa. At-least-once delivery.',
+        label: "Clasificación / embeddings / barato",
+        desc: "Alto volumen, bajo costo",
+        result: "workersAI",
+        explanation:
+          "Workers AI: CLIP, Llama 8B, Whisper. Edge, predecible. Custom → Modal.",
       },
       {
-        label: 'Sí, real-time',
-        desc: 'WebSockets, colaboración en vivo, eventos.',
-        result: 'durable-objects',
-        explanation: 'Durable Objects + WebSockets para estado real-time compartido entre conexiones.',
+        label: "RAG sobre documentos",
+        desc: "Preguntas sobre docs del cliente",
+        result: "aiSearch",
+        explanation:
+          "AI Search: ingesta auto, hybrid retrieval, reranking, integración nativa.",
+      },
+      {
+        label: "Visión / OCR / imagen",
+        desc: "Clasificar, extraer texto",
+        result: "workersAI",
+        explanation:
+          "CLIP zero-shot. Claude multimodal para OCR robusto. Custom VLMs → Modal.",
+      },
+      {
+        label: "Voz (STT/TTS)",
+        desc: "Transcripción, síntesis",
+        result: "workersAI",
+        explanation:
+          "Whisper en Workers AI/Containers. ElevenLabs/OpenAI TTS. Workers Calls WebRTC.",
       },
     ],
   },
