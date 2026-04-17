@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useExplorerStore } from '#/stores/explorer-store'
 import { ARCHITECTURES } from '#/data/architectures'
@@ -32,9 +33,21 @@ export function Sidebar() {
   const tenants = useExplorerStore((s) => s.tenants)
   const updateTraffic = useExplorerStore((s) => s.updateTraffic)
   const navigate = useNavigate()
+  const [filter, setFilter] = useState('')
 
   const isLight = getTheme() === 'light'
   const trafficValues: Record<TrafficKey, number> = { rps, storage, aiCalls, tenants }
+
+  const filteredArchitectures = useMemo(() => {
+    if (!filter.trim()) return ARCHITECTURES
+    const q = filter.toLowerCase()
+    return ARCHITECTURES.filter(
+      (arch: Architecture) =>
+        arch.name.toLowerCase().includes(q) ||
+        arch.tag.toLowerCase().includes(q) ||
+        arch.id.toLowerCase().includes(q)
+    )
+  }, [filter])
 
   return (
     <div
@@ -56,8 +69,33 @@ export function Sidebar() {
         >
           Arquitecturas de referencia
         </h3>
-        <div className="flex flex-col gap-1">
-          {ARCHITECTURES.map((arch: Architecture) => {
+
+        {/* Search filter */}
+        <div className="mb-2">
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar..."
+            className="w-full px-2.5 py-1.5 text-xs rounded-md outline-none transition-colors"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '10px',
+              color: isLight ? 'var(--text)' : '#e4e4e7',
+              background: isLight ? 'white' : '#111318',
+              border: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)'
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = isLight ? 'var(--border)' : '#27272a'
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          {filteredArchitectures.map((arch: Architecture, i: number) => {
             const isActive = selectedArch === arch.id
             return (
               <button
@@ -66,7 +104,7 @@ export function Sidebar() {
                   selectArch(arch.id)
                   void navigate({ to: '/architectures' })
                 }}
-                className="text-left px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer"
+                className="text-left px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer"
                 style={{
                   background: isActive
                     ? (isLight ? 'white' : 'transparent')
@@ -92,21 +130,34 @@ export function Sidebar() {
                   }
                 }}
               >
-                <span
-                  className="block text-sm"
-                  style={{
-                    color: isActive ? '#e4e4e7' : '#a1a1aa',
-                    fontWeight: isActive ? 500 : 400,
-                  }}
-                >
-                  {arch.name}
-                </span>
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '8px',
+                      color: '#52525b',
+                      minWidth: '14px',
+                    }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    className="block text-sm leading-tight"
+                    style={{
+                      color: isActive ? '#e4e4e7' : '#a1a1aa',
+                      fontWeight: isActive ? 500 : 400,
+                    }}
+                  >
+                    {arch.name}
+                  </span>
+                </div>
                 <span
                   className="block mt-0.5"
                   style={{
                     fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '9px',
-                    color: '#71717a',
+                    fontSize: '8px',
+                    color: '#52525b',
+                    paddingLeft: '20px',
                   }}
                 >
                   {arch.tag}
@@ -114,6 +165,14 @@ export function Sidebar() {
               </button>
             )
           })}
+          {filteredArchitectures.length === 0 && (
+            <span
+              className="text-xs px-3 py-2"
+              style={{ color: '#52525b', fontStyle: 'italic' }}
+            >
+              Sin resultados
+            </span>
+          )}
         </div>
       </section>
 

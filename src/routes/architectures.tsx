@@ -5,6 +5,7 @@ import { useExplorerStore } from '#/stores/explorer-store'
 import { ARCHITECTURES } from '#/data/architectures'
 import { FlowCanvas } from '#/components/architecture/flow-canvas'
 import { CostBreakdown } from '#/components/architecture/cost-breakdown'
+import { CodePreview } from '#/components/architecture/code-preview'
 import { getTheme } from '#/lib/theme'
 import type { Architecture } from '#/data/types'
 
@@ -71,6 +72,9 @@ function ArchitecturesPage() {
         <div style={{ borderTop: `1px solid ${isLight ? 'var(--border)' : '#27272a'}` }}>
           <CostBreakdown architectureId={arch.id} />
         </div>
+
+        {/* Code preview (Monaco editor) */}
+        <CodePreview architectureId={arch.id} />
 
         {/* Steps */}
         <div
