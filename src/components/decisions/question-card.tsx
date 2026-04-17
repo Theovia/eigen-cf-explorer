@@ -22,16 +22,18 @@ export function QuestionCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className="flex flex-col gap-4"
     >
+      {/* Question text: Chakra Petch 18px zinc-100 */}
       <h2
-        className="text-lg font-bold"
+        className="font-bold"
         style={{
           fontFamily: '"Chakra Petch", sans-serif',
-          color: 'var(--text)',
+          color: '#f4f4f5',
+          fontSize: '18px',
         }}
       >
         <span
@@ -39,7 +41,6 @@ export function QuestionCard({
           style={{
             fontFamily: '"JetBrains Mono", monospace',
             color: 'var(--accent)',
-            textShadow: '0 0 8px rgba(249, 115, 22, 0.3)',
           }}
         >
           {String(questionIdx + 1).padStart(2, '0')}.
@@ -47,6 +48,7 @@ export function QuestionCard({
         {decision.question}
       </h2>
 
+      {/* Options: bg #111318, border zinc-800, hover border zinc-600 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {decision.options.map((opt, i) => {
           const isSelected = selectedOption === i
@@ -54,36 +56,29 @@ export function QuestionCard({
             <button
               key={i}
               onClick={() => onSelect(questionIdx, i)}
-              className="text-left p-4 rounded-xl transition-all duration-200 cursor-pointer"
+              className="text-left p-4 rounded-lg transition-all duration-150 cursor-pointer"
               style={{
-                background: isSelected
-                  ? 'rgba(249, 115, 22, 0.06)'
-                  : 'var(--glass-bg)',
-                border: isSelected
-                  ? '1px solid rgba(249, 115, 22, 0.25)'
-                  : '1px solid var(--glass-border)',
-                boxShadow: isSelected
-                  ? '0 0 20px rgba(249, 115, 22, 0.1)'
-                  : 'none',
-                transform: isSelected ? 'scale(1.01)' : 'scale(1)',
+                background: isSelected ? '#1a1510' : '#111318',
+                border: `1px solid ${isSelected ? '#27272a' : '#27272a'}`,
+                borderLeft: isSelected
+                  ? '2px solid var(--accent)'
+                  : '2px solid transparent',
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.background = 'var(--glass-hover)'
-                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.borderColor = '#52525b'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.background = 'var(--glass-bg)'
-                  e.currentTarget.style.borderColor = 'var(--glass-border)'
+                  e.currentTarget.style.borderColor = '#27272a'
                 }
               }}
             >
-              <span className="block text-sm font-medium" style={{ color: 'var(--text)' }}>
+              <span className="block text-sm font-medium" style={{ color: '#f4f4f5' }}>
                 {opt.label}
               </span>
-              <span className="block text-xs mt-1 leading-relaxed" style={{ color: 'var(--text3)' }}>
+              <span className="block text-xs mt-1 leading-relaxed" style={{ color: '#71717a' }}>
                 {opt.desc}
               </span>
             </button>
@@ -91,22 +86,20 @@ export function QuestionCard({
         })}
       </div>
 
-      {/* Explanation */}
+      {/* Explanation: 13px zinc-300 */}
       <AnimatePresence>
         {answered && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-xl p-4"
+            transition={{ duration: 0.25 }}
+            className="pl-3"
             style={{
-              background: 'rgba(249, 115, 22, 0.04)',
-              border: '1px solid rgba(249, 115, 22, 0.15)',
-              borderLeft: '3px solid var(--accent)',
+              borderLeft: '2px solid var(--accent)',
             }}
           >
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text2)' }}>
+            <p style={{ color: '#d4d4d8', fontSize: '13px', lineHeight: 1.6 }}>
               {decision.options[selectedOption].explanation}
             </p>
           </motion.div>
@@ -117,18 +110,17 @@ export function QuestionCard({
       <AnimatePresence>
         {answered && !isLast && (
           <motion.button
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             onClick={onNext}
-            className="self-end px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer"
+            className="self-end px-4 py-2 rounded text-sm font-semibold transition-colors duration-150 cursor-pointer"
             style={{
               fontFamily: '"Chakra Petch", sans-serif',
               background: 'var(--accent)',
-              color: 'white',
-              border: '1px solid var(--accent)',
-              boxShadow: '0 0 15px rgba(249, 115, 22, 0.2)',
+              color: 'black',
+              border: 'none',
             }}
           >
             Siguiente pregunta &rarr;

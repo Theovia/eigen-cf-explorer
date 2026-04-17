@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -14,9 +14,12 @@ import { MeshGradient } from '@paper-design/shaders-react'
 
 import { ServiceNode, type ServiceNodeType } from './service-node'
 import { ParticleEdge } from './particle-edge'
+import { FlowContext } from './flow-context'
+import { AmbientParticles } from './ambient-particles'
 import { ARCHITECTURES } from '#/data/architectures'
 import { SERVICES } from '#/data/services'
 import { useExplorerStore } from '#/stores/explorer-store'
+import { getTheme } from '#/lib/theme'
 import type { Architecture, ArchitectureEdge, CostBreakdownRow, NormalizedTraffic } from '#/data/types'
 
 import '@xyflow/react/dist/style.css'
@@ -127,6 +130,12 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
   const aiCalls = useExplorerStore((s) => s.aiCalls)
   const tenants = useExplorerStore((s) => s.tenants)
 
+  // -- Hover state (local, not Zustand) ----
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null)
+
+  // -- Mouse position for parallax (normalized 0-1) ----
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 })
+
   const arch = useMemo(
     () => ARCHITECTURES.find((a: Architecture) => a.id === architectureId),
     [architectureId],
@@ -174,6 +183,25 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialData.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData.edges)
 
+  // -- Compute connected nodes and edges from hover ----
+  const { connectedNodes, connectedEdges } = useMemo(() => {
+    if (!hoveredNode) return { connectedNodes: new Set<string>(), connectedEdges: new Set<string>() }
+
+    const cNodes = new Set<string>()
+    const cEdges = new Set<string>()
+    cNodes.add(hoveredNode)
+
+    for (const edge of edges) {
+      if (edge.source === hoveredNode || edge.target === hoveredNode) {
+        cEdges.add(edge.id)
+        cNodes.add(edge.source)
+        cNodes.add(edge.target)
+      }
+    }
+
+    return { connectedNodes: cNodes, connectedEdges: cEdges }
+  }, [hoveredNode, edges])
+
   // Sync when architecture changes
   useEffect(() => {
     setNodes(initialData.nodes)
@@ -198,6 +226,26 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
     setTimeout(() => _instance.fitView(), 50)
   }, [])
 
+  // -- Node hover handlers ----
+  const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: ServiceNodeType) => {
+    setHoveredNode(node.id)
+    document.body.classList.add('cursor-on-node')
+  }, [])
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNode(null)
+    document.body.classList.remove('cursor-on-node')
+  }, [])
+
+  // -- Mouse move handler for parallax ----
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMousePos({
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
+    })
+  }, [])
+
   if (!arch) {
     return (
       <div
@@ -209,58 +257,71 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
     )
   }
 
-  return (
-    <div className="w-full h-full" style={{ position: 'relative', minHeight: 400 }}>
-      {/* Paper Shaders MeshGradient background — ambient, non-interactive */}
-      <div
-        className="shader-bg"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      >
-        <MeshGradient
-          color1="#f97316"
-          color2="#06b6d4"
-          color3="#7c3aed"
-          color4="#050508"
-          speed={0.15}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
+  const isLight = getTheme() === 'light'
 
-      {/* React Flow on top */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onInit={onInit}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          proOptions={{ hideAttribution: true }}
-          minZoom={0.3}
-          maxZoom={2}
+  return (
+    <FlowContext.Provider value={{ hoveredNode, connectedNodes, connectedEdges, mousePos }}>
+      <div
+        className="w-full h-full flow-canvas-area"
+        style={{ position: 'relative', minHeight: 400, cursor: 'none' }}
+        onMouseMove={handleMouseMove}
+      >
+        {/* Ambient floating particles — behind everything */}
+        <AmbientParticles />
+
+        {/* Paper Shaders MeshGradient background — ambient, non-interactive */}
+        <div
+          className="shader-bg"
           style={{
-            background: 'transparent',
+            position: 'absolute',
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
           }}
         >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={24}
-            size={1}
-            color="rgba(255,255,255,0.04)"
+          <MeshGradient
+            color1={isLight ? '#ea580c' : '#f97316'}
+            color2={isLight ? '#0891b2' : '#06b6d4'}
+            color3={isLight ? '#d6d3d1' : '#7c3aed'}
+            color4={isLight ? '#fafaf9' : '#050508'}
+            speed={0.15}
+            style={{ width: '100%', height: '100%' }}
           />
-          <Controls
-            position="bottom-right"
-            showInteractive={false}
-          />
-        </ReactFlow>
+        </div>
+
+        {/* React Flow on top */}
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onInit={onInit}
+            onNodeMouseEnter={handleNodeMouseEnter}
+            onNodeMouseLeave={handleNodeMouseLeave}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            proOptions={{ hideAttribution: true }}
+            minZoom={0.3}
+            maxZoom={2}
+            style={{
+              background: 'transparent',
+            }}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={24}
+              size={1}
+              color={isLight ? 'rgba(168, 162, 158, 0.35)' : 'rgba(63, 63, 70, 0.4)'}
+            />
+            <Controls
+              position="bottom-right"
+              showInteractive={false}
+            />
+          </ReactFlow>
+        </div>
       </div>
-    </div>
+    </FlowContext.Provider>
   )
 }

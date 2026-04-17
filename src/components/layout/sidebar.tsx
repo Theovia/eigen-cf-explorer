@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useExplorerStore } from '#/stores/explorer-store'
 import { ARCHITECTURES } from '#/data/architectures'
+import { getTheme } from '#/lib/theme'
 import type { Architecture } from '#/data/types'
 
 const sliderConfig = [
@@ -32,30 +33,30 @@ export function Sidebar() {
   const updateTraffic = useExplorerStore((s) => s.updateTraffic)
   const navigate = useNavigate()
 
+  const isLight = getTheme() === 'light'
   const trafficValues: Record<TrafficKey, number> = { rps, storage, aiCalls, tenants }
 
   return (
-    <div className="flex flex-col gap-6 p-4 overflow-y-auto h-full">
+    <div
+      className="flex flex-col gap-6 p-4 overflow-y-auto h-full"
+      style={{ background: isLight ? 'var(--bg)' : undefined }}
+    >
       {/* Architecture presets */}
       <section>
         <h3
-          className="text-[10px] uppercase tracking-[0.2em] mb-3 flex items-center gap-2"
+          className="mb-3"
           style={{
-            fontFamily: '"Chakra Petch", sans-serif',
-            color: 'var(--text3)',
-            fontWeight: 600,
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '9px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: '#71717a',
+            fontWeight: 500,
           }}
         >
-          <span
-            className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{
-              background: 'var(--cyan)',
-              boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
-            }}
-          />
           Arquitecturas de referencia
         </h3>
-        <div className="flex flex-col gap-2 stagger">
+        <div className="flex flex-col gap-1">
           {ARCHITECTURES.map((arch: Architecture) => {
             const isActive = selectedArch === arch.id
             return (
@@ -65,43 +66,47 @@ export function Sidebar() {
                   selectArch(arch.id)
                   void navigate({ to: '/architectures' })
                 }}
-                className="text-left px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer"
+                className="text-left px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer"
                 style={{
                   background: isActive
-                    ? 'rgba(249, 115, 22, 0.06)'
-                    : 'var(--glass-bg)',
-                  border: isActive
-                    ? '1px solid rgba(249, 115, 22, 0.2)'
-                    : '1px solid var(--glass-border)',
+                    ? (isLight ? 'white' : 'transparent')
+                    : 'transparent',
+                  border: 'none',
                   borderLeft: isActive
-                    ? '3px solid var(--accent)'
-                    : '3px solid transparent',
-                  boxShadow: isActive
-                    ? '0 0 20px rgba(249, 115, 22, 0.08)'
+                    ? '2px solid var(--accent)'
+                    : '2px solid transparent',
+                  boxShadow: isLight
+                    ? (isActive
+                      ? '0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)'
+                      : 'none')
                     : 'none',
-                  transform: 'scale(1)',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'var(--glass-hover)'
-                    e.currentTarget.style.transform = 'scale(1.01)'
+                    e.currentTarget.style.background = isLight ? 'white' : '#18181b'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    e.currentTarget.style.background = 'var(--glass-bg)'
-                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.background = 'transparent'
                   }
                 }}
               >
-                <span className="block text-sm font-medium" style={{ color: 'var(--text)' }}>
+                <span
+                  className="block text-sm"
+                  style={{
+                    color: isActive ? '#e4e4e7' : '#a1a1aa',
+                    fontWeight: isActive ? 500 : 400,
+                  }}
+                >
                   {arch.name}
                 </span>
                 <span
-                  className="block text-[10px] mt-0.5"
+                  className="block mt-0.5"
                   style={{
                     fontFamily: '"JetBrains Mono", monospace',
-                    color: 'var(--text3)',
+                    fontSize: '9px',
+                    color: '#71717a',
                   }}
                 >
                   {arch.tag}
@@ -115,20 +120,16 @@ export function Sidebar() {
       {/* Traffic simulator */}
       <section>
         <h3
-          className="text-[10px] uppercase tracking-[0.2em] mb-3 flex items-center gap-2"
+          className="mb-3"
           style={{
-            fontFamily: '"Chakra Petch", sans-serif',
-            color: 'var(--text3)',
-            fontWeight: 600,
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '9px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.15em',
+            color: '#71717a',
+            fontWeight: 500,
           }}
         >
-          <span
-            className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{
-              background: 'var(--cyan)',
-              boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
-            }}
-          />
           Simulador de trafico
         </h3>
         <div className="flex flex-col gap-4">
@@ -137,11 +138,12 @@ export function Sidebar() {
               <div className="flex justify-between items-baseline mb-1.5">
                 <label className="text-xs" style={{ color: 'var(--text2)' }}>{label}</label>
                 <span
-                  className="text-xs font-semibold"
                   style={{
                     fontFamily: '"JetBrains Mono", monospace',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: '12px',
+                    fontWeight: 500,
                     color: 'var(--accent)',
-                    textShadow: '0 0 8px rgba(249, 115, 22, 0.3)',
                   }}
                 >
                   {formatSliderValue(key, trafficValues[key])}

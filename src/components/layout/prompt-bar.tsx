@@ -3,6 +3,7 @@ import { useExplorerStore } from '#/stores/explorer-store'
 import { SERVICES } from '#/data/services'
 import { ARCHITECTURES } from '#/data/architectures'
 import { buildPrompt } from '#/lib/prompt-builder'
+import { getTheme } from '#/lib/theme'
 import type { Architecture } from '#/data/types'
 
 export function PromptBar() {
@@ -31,7 +32,6 @@ export function PromptBar() {
     try {
       await navigator.clipboard.writeText(prompt)
       setCopied(true)
-      // Animate the button
       if (btnRef.current) {
         btnRef.current.style.transform = 'scale(0.95)'
         setTimeout(() => {
@@ -51,27 +51,27 @@ export function PromptBar() {
     }
   }, [prompt])
 
+  const isLight = getTheme() === 'light'
+
   return (
     <div
-      className="glass"
       style={{
-        borderTop: '1px solid var(--glass-border)',
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderBottom: 'none',
+        background: isLight ? 'white' : '#0a0a0b',
+        borderTop: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+        boxShadow: isLight ? '0 -1px 3px rgba(0,0,0,0.03)' : 'none',
       }}
     >
       {/* Expanded view */}
       {expanded && (
         <div
           className="max-h-60 overflow-y-auto p-4"
-          style={{ borderBottom: '1px solid var(--glass-border)' }}
+          style={{ borderBottom: `1px solid ${isLight ? 'var(--border)' : '#27272a'}` }}
         >
           <pre
             className="text-xs whitespace-pre-wrap leading-relaxed"
             style={{
               fontFamily: '"JetBrains Mono", monospace',
-              color: 'var(--text2)',
+              color: '#a1a1aa',
             }}
           >
             {prompt}
@@ -83,10 +83,11 @@ export function PromptBar() {
       <div className="flex items-center gap-3 px-4 py-2.5">
         <div className="flex-1 min-w-0">
           <p
-            className="text-xs truncate"
+            className="truncate"
             style={{
               fontFamily: '"JetBrains Mono", monospace',
-              color: 'var(--text3)',
+              fontSize: '12px',
+              color: '#71717a',
             }}
           >
             {prompt.split('\n')[0]}
@@ -99,17 +100,17 @@ export function PromptBar() {
           style={{
             fontFamily: '"Chakra Petch", sans-serif',
             fontWeight: 500,
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
-            color: 'var(--text2)',
+            background: isLight ? 'var(--bg3)' : 'transparent',
+            border: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+            color: '#a1a1aa',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--glass-hover)'
-            e.currentTarget.style.color = 'var(--text)'
+            e.currentTarget.style.background = isLight ? 'var(--bg3)' : '#18181b'
+            e.currentTarget.style.color = '#f4f4f5'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--glass-bg)'
-            e.currentTarget.style.color = 'var(--text2)'
+            e.currentTarget.style.background = isLight ? 'var(--bg3)' : 'transparent'
+            e.currentTarget.style.color = '#a1a1aa'
           }}
         >
           {expanded ? 'Cerrar' : 'Ver completo'}
@@ -121,15 +122,21 @@ export function PromptBar() {
           className="shrink-0 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
           style={{
             fontFamily: '"Chakra Petch", sans-serif',
-            background: copied
-              ? 'var(--green)'
-              : 'var(--accent)',
-            color: 'white',
-            border: `1px solid ${copied ? 'var(--green)' : 'var(--accent)'}`,
-            boxShadow: copied
-              ? '0 0 15px rgba(34, 197, 94, 0.3)'
-              : '0 0 15px rgba(249, 115, 22, 0.3)',
+            background: copied ? 'var(--green)' : '#ea580c',
+            color: copied ? 'white' : 'black',
+            border: 'none',
+            boxShadow: 'none',
             transform: 'scale(1)',
+          }}
+          onMouseEnter={(e) => {
+            if (!copied) {
+              e.currentTarget.style.background = '#f97316'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!copied) {
+              e.currentTarget.style.background = '#ea580c'
+            }
           }}
         >
           {copied ? '\u2713 Copiado!' : 'Copiar prompt'}

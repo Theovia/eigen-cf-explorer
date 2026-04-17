@@ -1,47 +1,16 @@
 import { useState, useMemo } from 'react'
 import { useExplorerStore } from '#/stores/explorer-store'
 import { SERVICES } from '#/data/services'
+import { getTheme } from '#/lib/theme'
 import type { Service } from '#/data/types'
 import { CatalogFilters } from './catalog-filters'
 
-const catBorderColors: Record<string, string> = {
+const catDotColors: Record<string, string> = {
   compute: 'var(--blue)',
   storage: 'var(--green)',
   ai: 'var(--purple)',
   security: 'var(--red)',
   integration: 'var(--cyan)',
-}
-
-const catGlows: Record<string, string> = {
-  compute: '0 0 20px rgba(59,130,246,0.12)',
-  storage: '0 0 20px rgba(34,197,94,0.12)',
-  ai: '0 0 20px rgba(168,85,247,0.12)',
-  security: '0 0 20px rgba(239,68,68,0.12)',
-  integration: '0 0 20px rgba(6,182,212,0.12)',
-}
-
-const catTextColors: Record<string, string> = {
-  compute: 'var(--blue)',
-  storage: 'var(--green)',
-  ai: 'var(--purple)',
-  security: 'var(--red)',
-  integration: 'var(--cyan)',
-}
-
-const catBgColors: Record<string, string> = {
-  compute: 'rgba(59,130,246,0.10)',
-  storage: 'rgba(34,197,94,0.10)',
-  ai: 'rgba(168,85,247,0.10)',
-  security: 'rgba(239,68,68,0.10)',
-  integration: 'rgba(6,182,212,0.10)',
-}
-
-const catLabels: Record<string, string> = {
-  compute: 'Compute',
-  storage: 'Storage',
-  ai: 'AI',
-  security: 'Security',
-  integration: 'Integration',
 }
 
 const allServices: Service[] = Object.values(SERVICES)
@@ -67,27 +36,27 @@ export function CatalogGrid() {
 
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
-      {/* Search */}
+      {/* Search — terminal style input */}
       <div>
         <input
           type="text"
           placeholder="Buscar servicios..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-lg text-sm transition-all duration-200"
+          className="w-full px-3.5 py-2.5 rounded-lg text-sm transition-colors duration-150"
           style={{
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
+            background: getTheme() === 'light' ? 'var(--bg3)' : '#0a0a0b',
+            border: `1px solid ${getTheme() === 'light' ? 'var(--border)' : '#27272a'}`,
             color: 'var(--text)',
             outline: 'none',
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '13px',
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.3)'
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(249, 115, 22, 0.1)'
+            e.currentTarget.style.borderColor = getTheme() === 'light' ? 'var(--border)' : '#52525b'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'var(--glass-border)'
-            e.currentTarget.style.boxShadow = 'none'
+            e.currentTarget.style.borderColor = getTheme() === 'light' ? 'var(--border)' : '#27272a'
           }}
         />
       </div>
@@ -99,65 +68,67 @@ export function CatalogGrid() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 stagger">
         {filtered.map((svc: Service) => {
           const isSelected = selectedService === svc.id
-          const borderColor = catBorderColors[svc.cat] ?? 'var(--text3)'
+          const dotColor = catDotColors[svc.cat] ?? 'var(--text3)'
+          const isLt = getTheme() === 'light'
 
           return (
             <button
               key={svc.id}
               onClick={() => selectService(svc.id)}
-              className="text-left p-3.5 rounded-xl transition-all duration-200 cursor-pointer"
+              className="text-left p-4 rounded-lg transition-all duration-150 cursor-pointer relative"
               style={{
                 background: isSelected
-                  ? 'rgba(249, 115, 22, 0.06)'
-                  : 'var(--glass-bg)',
-                border: isSelected
-                  ? '1px solid rgba(249, 115, 22, 0.25)'
-                  : '1px solid var(--glass-border)',
-                borderTop: `2px solid ${isSelected ? 'var(--accent)' : borderColor}`,
-                boxShadow: isSelected
-                  ? '0 0 20px rgba(249, 115, 22, 0.1)'
+                  ? (isLt ? 'white' : '#1a1510')
+                  : (isLt ? 'white' : '#111318'),
+                border: `1px solid ${isLt ? 'var(--border)' : '#27272a'}`,
+                borderLeft: isSelected
+                  ? '2px solid var(--accent)'
+                  : '2px solid transparent',
+                boxShadow: isLt
+                  ? (isSelected
+                    ? '0 2px 8px rgba(0,0,0,0.06)'
+                    : '0 1px 3px rgba(0,0,0,0.04)')
                   : 'none',
-                transform: 'translateY(0)',
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.transform = 'translateY(-4px)'
-                  e.currentTarget.style.background = 'var(--glass-hover)'
-                  e.currentTarget.style.borderColor = `${borderColor}40`
-                  e.currentTarget.style.boxShadow = catGlows[svc.cat] ?? 'none'
+                  e.currentTarget.style.borderColor = isLt ? '#d6d3d1' : '#52525b'
+                  e.currentTarget.style.background = isLt ? 'white' : '#18181b'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.background = 'var(--glass-bg)'
-                  e.currentTarget.style.borderColor = 'var(--glass-border)'
-                  e.currentTarget.style.boxShadow = 'none'
+                  e.currentTarget.style.borderColor = isLt ? 'var(--border)' : '#27272a'
+                  e.currentTarget.style.background = isLt ? 'white' : '#111318'
                 }
               }}
             >
+              {/* Category dot — 3px, top-right corner */}
               <span
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+                className="absolute top-3 right-3 rounded-full"
                 style={{
-                  color: catTextColors[svc.cat] ?? 'var(--text3)',
-                  background: catBgColors[svc.cat] ?? 'rgba(113,113,122,0.1)',
-                  border: `1px solid ${catTextColors[svc.cat] ?? 'var(--text3)'}20`,
+                  width: 6,
+                  height: 6,
+                  background: dotColor,
                 }}
-              >
-                {catLabels[svc.cat] ?? svc.cat}
-              </span>
+              />
               <h3
-                className="text-sm font-semibold mt-2.5"
+                className="font-semibold mt-0"
                 style={{
-                  color: 'var(--text)',
+                  color: '#f4f4f5',
                   fontFamily: '"Chakra Petch", sans-serif',
+                  fontSize: '14px',
                 }}
               >
                 {svc.name}
               </h3>
               <p
-                className="text-xs mt-1 line-clamp-2 leading-relaxed"
-                style={{ color: 'var(--text3)' }}
+                className="mt-1.5 line-clamp-2"
+                style={{
+                  color: '#a1a1aa',
+                  lineHeight: '1.4',
+                  fontSize: '11px',
+                }}
               >
                 {svc.desc}
               </p>

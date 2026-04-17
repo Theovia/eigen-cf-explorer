@@ -5,6 +5,7 @@ import { useExplorerStore } from '#/stores/explorer-store'
 import { ARCHITECTURES } from '#/data/architectures'
 import { FlowCanvas } from '#/components/architecture/flow-canvas'
 import { CostBreakdown } from '#/components/architecture/cost-breakdown'
+import { getTheme } from '#/lib/theme'
 import type { Architecture } from '#/data/types'
 
 export const Route = createFileRoute('/architectures')({
@@ -28,6 +29,8 @@ function ArchitecturesPage() {
     )
   }
 
+  const isLight = getTheme() === 'light'
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -41,18 +44,18 @@ function ArchitecturesPage() {
         {/* Architecture header */}
         <div
           className="px-5 py-3"
-          style={{ borderBottom: '1px solid var(--glass-border)' }}
+          style={{ borderBottom: `1px solid ${isLight ? 'var(--border)' : '#27272a'}` }}
         >
           <h1
             className="text-lg font-bold"
             style={{
               fontFamily: '"Chakra Petch", sans-serif',
-              color: 'var(--text)',
+              color: '#f4f4f5',
             }}
           >
             {arch.name}
           </h1>
-          <p className="text-xs mt-1" style={{ color: 'var(--text2)' }}>
+          <p className="text-xs mt-1" style={{ color: '#a1a1aa' }}>
             {arch.desc}
           </p>
         </div>
@@ -65,7 +68,7 @@ function ArchitecturesPage() {
         </div>
 
         {/* Cost breakdown */}
-        <div style={{ borderTop: '1px solid var(--glass-border)' }}>
+        <div style={{ borderTop: `1px solid ${isLight ? 'var(--border)' : '#27272a'}` }}>
           <CostBreakdown architectureId={arch.id} />
         </div>
 
@@ -73,28 +76,24 @@ function ArchitecturesPage() {
         <div
           className="px-5 py-3 overflow-y-auto max-h-36"
           style={{
-            borderTop: '1px solid var(--glass-border)',
-            background: 'var(--glass-bg)',
+            borderTop: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+            background: isLight ? 'var(--bg3)' : '#0a0a0b',
           }}
         >
           <h3
-            className="text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"
+            className="mb-2"
             style={{
-              fontFamily: '"Chakra Petch", sans-serif',
-              color: 'var(--text3)',
-              fontWeight: 600,
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '9px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              color: '#71717a',
+              fontWeight: 500,
             }}
           >
-            <span
-              className="inline-block w-1.5 h-1.5 rounded-full"
-              style={{
-                background: 'var(--accent)',
-                boxShadow: '0 0 6px rgba(249, 115, 22, 0.5)',
-              }}
-            />
             Pasos de implementacion
           </h3>
-          <ol className="list-decimal list-inside text-xs space-y-1.5" style={{ color: 'var(--text2)' }}>
+          <ol className="list-decimal list-inside text-xs space-y-1.5" style={{ color: '#a1a1aa' }}>
             {arch.steps.map((step: string, i: number) => (
               <li key={i} className="leading-relaxed">{step}</li>
             ))}

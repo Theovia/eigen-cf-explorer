@@ -79,10 +79,8 @@ function DecisionsPage() {
             style={{
               background: decisionAnswers[idx] !== undefined
                 ? 'var(--accent)'
-                : 'var(--glass-border)',
-              boxShadow: decisionAnswers[idx] !== undefined
-                ? '0 0 8px rgba(249, 115, 22, 0.3)'
-                : 'none',
+                : '#27272a',
+              boxShadow: 'none',
             }}
           />
         ))}

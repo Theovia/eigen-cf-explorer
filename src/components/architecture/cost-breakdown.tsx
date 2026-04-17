@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react'
 import { ARCHITECTURES } from '#/data/architectures'
 import { useExplorerStore } from '#/stores/explorer-store'
+import { getTheme } from '#/lib/theme'
 import type { Architecture, CostBreakdownRow, NormalizedTraffic } from '#/data/types'
 
 // -- Normalize traffic to monthly scale ----
@@ -55,20 +56,6 @@ function AnimatedCost({ value }: { value: number }) {
   return <>{fmt(display)}</>
 }
 
-// -- Category color dots ----
-const catDotColors: Record<string, string> = {
-  Workers: 'var(--blue)',
-  KV: 'var(--green)',
-  D1: 'var(--green)',
-  R2: 'var(--green)',
-  'Workers AI': 'var(--purple)',
-  'AI Gateway': 'var(--purple)',
-  Vectorize: 'var(--purple)',
-  Queues: 'var(--cyan)',
-  'Durable Objects': 'var(--blue)',
-  Pages: 'var(--blue)',
-}
-
 // -- Component ----
 interface CostBreakdownProps {
   architectureId: string
@@ -106,13 +93,14 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
     )
   }
 
+  const isLight = getTheme() === 'light'
+
   return (
     <div
       className="w-full overflow-x-auto"
       style={{
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: isLight ? 'white' : '#0a0a0b',
+        border: isLight ? 'none' : '1px solid #27272a',
       }}
     >
       <table className="w-full text-xs border-collapse">
@@ -120,31 +108,31 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
           <tr
             className="text-left"
             style={{
-              borderBottom: '1px solid var(--glass-border)',
-              color: 'var(--text3)',
+              borderBottom: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+              color: '#52525b',
             }}
           >
             <th
-              className="py-2.5 px-3 font-semibold"
-              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+              className="py-2.5 px-3 font-medium"
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em' }}
             >
               Service
             </th>
             <th
-              className="py-2.5 px-3 font-semibold"
-              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+              className="py-2.5 px-3 font-medium"
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em' }}
             >
               Role
             </th>
             <th
-              className="py-2.5 px-3 font-semibold"
-              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+              className="py-2.5 px-3 font-medium"
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em' }}
             >
               Pricing ref
             </th>
             <th
-              className="py-2.5 px-3 font-semibold text-right"
-              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+              className="py-2.5 px-3 font-medium text-right"
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.15em' }}
             >
               Est. cost/mo
             </th>
@@ -156,39 +144,55 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
               key={`${row.service}-${i}`}
               className="transition-colors duration-150"
               style={{
-                borderBottom: '1px solid var(--glass-border)',
+                height: 36,
+                borderBottom: `1px solid ${isLight ? 'var(--border)' : 'rgba(39, 39, 42, 0.6)'}`,
                 color: 'var(--text)',
-                background: i % 2 === 0 ? 'transparent' : 'var(--glass-bg)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--glass-hover)'
+                e.currentTarget.style.background = isLight
+                  ? 'var(--bg3)'
+                  : '#18181b'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'var(--glass-bg)'
+                e.currentTarget.style.background = 'transparent'
               }}
             >
-              <td className="py-2 px-3 font-medium flex items-center gap-2">
-                <span
-                  className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{
-                    background: catDotColors[row.service] ?? 'var(--text3)',
-                    boxShadow: `0 0 4px ${catDotColors[row.service] ?? 'var(--text3)'}60`,
-                  }}
-                />
+              <td
+                className="py-2 px-3"
+                style={{
+                  fontWeight: 500,
+                  color: isLight ? 'var(--text)' : '#e4e4e7',
+                }}
+              >
                 {row.service}
               </td>
-              <td className="py-2 px-3" style={{ color: 'var(--text2)' }}>
+              <td
+                className="py-2 px-3"
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  color: '#71717a',
+                  fontSize: '11px',
+                }}
+              >
                 {row.role}
               </td>
               <td
-                className="py-2 px-3 text-[10px]"
-                style={{ fontFamily: '"JetBrains Mono", monospace', color: 'var(--text3)' }}
+                className="py-2 px-3"
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  color: '#a1a1aa',
+                  fontSize: '10px',
+                }}
               >
                 {row.pricingNote}
               </td>
               <td
                 className="py-2 px-3 text-right"
-                style={{ fontFamily: '"JetBrains Mono", monospace' }}
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: '#f4f4f5',
+                }}
               >
                 {fmt(row.estimated)}
               </td>
@@ -198,7 +202,7 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
         <tfoot>
           <tr
             style={{
-              borderTop: '1px solid rgba(34, 197, 94, 0.2)',
+              borderTop: `1px solid ${isLight ? 'rgba(22, 163, 74, 0.15)' : '#3f3f46'}`,
             }}
           >
             <td
@@ -206,8 +210,7 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
               className="py-3 px-3 font-bold text-sm"
               style={{
                 color: 'var(--green)',
-                fontFamily: '"Chakra Petch", sans-serif',
-                textShadow: '0 0 10px rgba(34, 197, 94, 0.3)',
+                fontFamily: '"JetBrains Mono", monospace',
               }}
             >
               Total estimated monthly cost
@@ -216,8 +219,8 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
               className="py-3 px-3 text-right font-bold text-sm"
               style={{
                 fontFamily: '"JetBrains Mono", monospace',
-                color: 'var(--green)',
-                textShadow: '0 0 10px rgba(34, 197, 94, 0.3)',
+                fontVariantNumeric: 'tabular-nums',
+                color: '#4ade80',
               }}
             >
               <AnimatedCost value={total} />

@@ -1,7 +1,9 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { useExplorerStore } from '#/stores/explorer-store'
+import { useFlowContext } from './flow-context'
+import { getTheme } from '#/lib/theme'
 
-// -- Category colors ----
+// -- Category colors (full saturation for dark mode top border) ----
 const CAT_COLORS: Record<string, string> = {
   compute: 'var(--blue)',
   storage: 'var(--green)',
@@ -10,29 +12,13 @@ const CAT_COLORS: Record<string, string> = {
   integration: 'var(--cyan)',
 }
 
-const CAT_BG: Record<string, string> = {
-  compute: 'rgba(59,130,246,0.10)',
-  storage: 'rgba(34,197,94,0.10)',
-  ai: 'rgba(168,85,247,0.10)',
-  security: 'rgba(239,68,68,0.10)',
-  integration: 'rgba(6,182,212,0.10)',
-}
-
-// RGB values for dynamic glow computation
-const CAT_RGB: Record<string, string> = {
-  compute: '59,130,246',
-  storage: '34,197,94',
-  ai: '168,85,247',
-  security: '239,68,68',
-  integration: '6,182,212',
-}
-
-const CAT_ICONS: Record<string, string> = {
-  compute: '\u26A1',
-  storage: '\uD83D\uDCBE',
-  ai: '\uD83E\uDDE0',
-  security: '\uD83D\uDEE1\uFE0F',
-  integration: '\uD83D\uDD17',
+// Muted/pastel category colors for light mode top border
+const CAT_COLORS_MUTED: Record<string, string> = {
+  compute: '#93c5fd',   // blue-300
+  storage: '#86efac',   // green-300
+  ai: '#c4b5fd',        // purple-300
+  security: '#fca5a5',  // red-300
+  integration: '#67e8f9', // cyan-300
 }
 
 // -- Custom node data shape ----
@@ -48,105 +34,115 @@ export type ServiceNodeType = Node<ServiceNodeData, 'service'>
 
 // -- Component ----
 export function ServiceNode({ data }: NodeProps<ServiceNodeType>) {
-  const { serviceId, name, category, role, costWeight = 0 } = data
+  const { serviceId, name, category, role } = data
   const selectedService = useExplorerStore((s) => s.selectedService)
   const selectService = useExplorerStore((s) => s.selectService)
+  const { hoveredNode, connectedNodes } = useFlowContext()
 
   const isSelected = selectedService === serviceId
+  const isLight = getTheme() === 'light'
   const catColor = CAT_COLORS[category] ?? 'var(--text3)'
-  const catBg = CAT_BG[category] ?? 'rgba(107,112,132,0.10)'
-  const catRgb = CAT_RGB[category] ?? '107,112,132'
+  const catColorMuted = CAT_COLORS_MUTED[category] ?? '#d4d4d8'
 
-  // Breathing node: cost weight modulates glow intensity and subtle scale
-  const cw = Math.min(Math.max(costWeight, 0), 1)
-  const glowIntensity = 0.12 + cw * 0.4 // 0.12 to 0.52
-  const glowSpread = 15 + cw * 30 // 15px to 45px
-  const scaleBoost = 1 + cw * 0.03 // 1.0 to 1.03
-  const pulseSpeed = 3 - cw * 1.5 // 3s to 1.5s (faster for higher cost)
+  // -- Connection highlighting ----
+  const isHighlightActive = hoveredNode !== null
+  const isConnected = connectedNodes.has(serviceId)
 
-  const breathingGlow = `0 0 ${glowSpread}px rgba(${catRgb}, ${glowIntensity}), 0 0 ${glowSpread * 2}px rgba(${catRgb}, ${glowIntensity * 0.3})`
-  const selectedGlow = '0 0 25px rgba(249,115,22,0.25), 0 0 50px rgba(249,115,22,0.08), 0 4px 20px rgba(0,0,0,0.5)'
+  // Dimming: when a node is hovered and this node is NOT connected
+  let nodeOpacity = 1
+  if (isHighlightActive && !isConnected) {
+    nodeOpacity = 0.35
+  }
+
+  // -- Light mode: elevation shadows. Dark mode: clean borders. ----
+  const lightBaseShadow = '0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)'
+  const lightHoverShadow = '0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)'
+  const lightSelectedShadow = '0 4px 16px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)'
+
+  const nodeShadow = isLight
+    ? (isSelected ? lightSelectedShadow : lightBaseShadow)
+    : 'none'
 
   return (
     <>
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2.5 !h-2.5 !border-0 !rounded-full"
+        className="!border-0 !rounded-full"
         style={{
-          background: catColor,
-          boxShadow: `0 0 6px ${catColor}60`,
+          width: 6,
+          height: 6,
+          background: isLight ? catColor : '#52525b',
+          opacity: nodeOpacity,
+          transition: 'opacity 0.3s ease',
         }}
       />
 
       <div
         onClick={() => selectService(isSelected ? null : serviceId)}
-        className="cursor-pointer rounded-xl px-3.5 py-3 transition-all duration-200 breathing-node"
+        className="cursor-pointer rounded-lg px-3 py-2.5 transition-all duration-200"
         style={{
-          width: 170,
-          background: 'var(--glass-bg)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          borderTop: `2px solid ${isSelected ? 'var(--accent)' : catColor}`,
-          borderLeft: '1px solid var(--glass-border)',
-          borderRight: '1px solid var(--glass-border)',
-          borderBottom: '1px solid var(--glass-border)',
-          boxShadow: isSelected ? selectedGlow : breathingGlow,
-          transform: isSelected ? 'translateY(-2px)' : `scale(${scaleBoost})`,
-          animationName: !isSelected ? 'breathing-glow' : 'none',
-          animationDuration: `${pulseSpeed}s`,
-          animationTimingFunction: 'ease-in-out',
-          animationIterationCount: 'infinite',
-          // Pass CSS custom properties for the keyframe animation
-          '--breathing-glow-low': breathingGlow,
-          '--breathing-glow-high': `0 0 ${glowSpread * 1.6}px rgba(${catRgb}, ${glowIntensity * 1.5}), 0 0 ${glowSpread * 3}px rgba(${catRgb}, ${glowIntensity * 0.5})`,
-          '--breathing-scale': `${scaleBoost}`,
-          '--breathing-scale-high': `${scaleBoost + 0.005}`,
-        } as React.CSSProperties}
+          width: 165,
+          background: isLight
+            ? 'white'
+            : (isSelected ? '#1a1510' : '#111318'),
+          borderTop: `2px solid ${isSelected
+            ? 'var(--accent)'
+            : (isLight ? catColorMuted : catColor)}`,
+          borderLeft: isSelected
+            ? (isLight ? '2px solid var(--accent)' : '2px solid var(--accent)')
+            : `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+          borderRight: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+          borderBottom: `1px solid ${isLight ? 'var(--border)' : '#27272a'}`,
+          boxShadow: nodeShadow,
+          opacity: nodeOpacity,
+          transition: 'opacity 0.3s ease, background 0.15s ease, border-color 0.15s ease',
+        }}
         onMouseEnter={(e) => {
           if (!isSelected) {
-            e.currentTarget.style.transform = `scale(${scaleBoost + 0.02}) translateY(-1px)`
-            e.currentTarget.style.boxShadow = `0 0 ${glowSpread * 2}px rgba(${catRgb}, ${glowIntensity * 2}), 0 8px 25px rgba(0,0,0,0.5)`
+            if (isLight) {
+              e.currentTarget.style.boxShadow = lightHoverShadow
+              e.currentTarget.style.borderColor = '#d6d3d1'
+            } else {
+              e.currentTarget.style.background = '#18181b'
+              e.currentTarget.style.borderColor = '#52525b'
+            }
           }
         }}
         onMouseLeave={(e) => {
           if (!isSelected) {
-            e.currentTarget.style.transform = `scale(${scaleBoost})`
-            e.currentTarget.style.boxShadow = breathingGlow
+            if (isLight) {
+              e.currentTarget.style.boxShadow = lightBaseShadow
+              e.currentTarget.style.borderColor = 'var(--border)'
+            } else {
+              e.currentTarget.style.background = '#111318'
+              e.currentTarget.style.borderColor = '#27272a'
+            }
           }
         }}
       >
-        {/* Row: icon + name */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs">{CAT_ICONS[category] ?? ''}</span>
-          <div
-            className="text-xs font-semibold leading-tight truncate"
-            style={{
-              color: 'var(--text)',
-              fontFamily: '"Chakra Petch", sans-serif',
-            }}
-          >
-            {name}
-          </div>
-        </div>
-
-        {/* Category badge */}
-        <span
-          className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider"
+        {/* Name — 14px Chakra Petch, zinc-100, weight 600 */}
+        <div
+          className="text-[14px] font-semibold leading-tight truncate"
           style={{
-            color: catColor,
-            background: catBg,
-            border: `1px solid ${catColor}25`,
+            color: 'var(--text)',
+            fontFamily: '"Chakra Petch", sans-serif',
           }}
         >
-          {category}
-        </span>
+          {name}
+        </div>
 
-        {/* Role in architecture */}
+        {/* Role — 10px monospace, zinc-500, uppercase tracking */}
         {role && (
           <div
-            className="mt-1.5 text-[10px] leading-snug"
-            style={{ color: 'var(--text3)' }}
+            className="mt-1 leading-snug"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '10px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#71717a',
+            }}
           >
             {role}
           </div>
@@ -156,10 +152,13 @@ export function ServiceNode({ data }: NodeProps<ServiceNodeType>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2.5 !h-2.5 !border-0 !rounded-full"
+        className="!border-0 !rounded-full"
         style={{
-          background: catColor,
-          boxShadow: `0 0 6px ${catColor}60`,
+          width: 6,
+          height: 6,
+          background: isLight ? catColor : '#52525b',
+          opacity: nodeOpacity,
+          transition: 'opacity 0.3s ease',
         }}
       />
     </>

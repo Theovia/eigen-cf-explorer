@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #050508;
-  --bg2: #0a0a0f;
-  --bg3: #0f1117;
-  --border: #1a1d2e;
+  --bg: #09090b;
+  --bg2: #111318;
+  --bg3: #18181b;
+  --border: #27272a;
   --text: #f4f4f5;
   --text2: #a1a1aa;
   --text3: #71717a;
@@ -15,119 +15,141 @@
   --red: #ef4444;
   --cyan: #06b6d4;
   --yellow: #eab308;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Glass token */
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-hover: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-hover: rgba(255, 255, 255, 0.04);
 
-  /* Glow tokens (dark defaults) */
-  --glow-orange: rgba(249, 115, 22, 0.15);
-  --glow-cyan: rgba(6, 182, 212, 0.15);
+  /* Glow tokens (dark defaults) — reduced */
+  --glow-orange: rgba(249, 115, 22, 0.08);
+  --glow-cyan: rgba(6, 182, 212, 0.08);
 }
 
 /* ── Light theme ─────────────────────────────────────────── */
+/* Design direction: Stripe Dashboard meets Linear App meets Apple HIG.
+   Warm stone palette, elevation through shadows (not borders/glows),
+   white cards floating on warm gray. */
 [data-theme="light"] {
-  --bg: #f8f9fb;
-  --bg2: #ffffff;
-  --bg3: #f0f1f5;
-  --border: #e2e4ea;
-  --text: #111318;
-  --text2: #4a4e5a;
-  --text3: #8b8f9e;
-  --accent: #e85d04;
-  --accent2: #dc4c00;
+  --bg: #fafaf9;          /* warm stone-50 — NOT cold white */
+  --bg2: #ffffff;          /* cards are white on warm bg */
+  --bg3: #f5f5f4;          /* stone-100 for hover/active */
+  --border: #e7e5e4;       /* stone-200 — warm gray borders */
+  --text: #1c1917;         /* stone-900 */
+  --text2: #57534e;        /* stone-600 */
+  --text3: #a8a29e;        /* stone-400 */
+  --accent: #ea580c;       /* orange-600 — richer on white */
+  --accent2: #c2410c;      /* orange-700 for hover */
   --blue: #2563eb;
   --green: #16a34a;
   --purple: #7c3aed;
   --red: #dc2626;
   --cyan: #0891b2;
   --yellow: #ca8a04;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-hover: rgba(0, 0, 0, 0.03);
-  --glow-orange: rgba(232, 93, 4, 0.12);
-  --glow-cyan: rgba(8, 145, 178, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-hover: rgba(0, 0, 0, 0.02);
+  --glow-orange: rgba(234, 88, 12, 0.08);
+  --glow-cyan: rgba(8, 145, 178, 0.08);
 }
 
 [data-theme="light"] body {
   background: var(--bg);
   color: var(--text);
+  /* Subtle warm ambient feel via very faint radial tints */
   background-image:
-    radial-gradient(circle at 20% 80%, rgba(232, 93, 4, 0.04), transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(8, 145, 178, 0.04), transparent 40%);
+    radial-gradient(circle at 30% 20%, rgba(234, 88, 12, 0.015), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(8, 145, 178, 0.015), transparent 50%);
 }
 
-/* Disable scanlines and grain in light mode */
+/* Remove scanlines and grain — no dark-mode overlays in light */
 [data-theme="light"] .scanlines::after,
 [data-theme="light"] .grain::before {
   display: none;
 }
 
-/* Light mode glass */
+/* Light mode glass — DEPTH through shadows, not frosted glass */
 [data-theme="light"] .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: white;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Light mode tech grid */
+/* Light mode tech grid — warmer, slightly more visible */
 [data-theme="light"] .tech-grid {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 
-/* Light mode glow effects - more subtle */
-[data-theme="light"] .glow-orange { box-shadow: 0 2px 12px rgba(232, 93, 4, 0.1); }
-[data-theme="light"] .glow-cyan { box-shadow: 0 2px 12px rgba(8, 145, 178, 0.1); }
-[data-theme="light"] .glow-green { box-shadow: 0 2px 12px rgba(22, 163, 74, 0.1); }
-[data-theme="light"] .glow-purple { box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1); }
-[data-theme="light"] .glow-red { box-shadow: 0 2px 12px rgba(220, 38, 38, 0.1); }
+/* Light mode glow effects — replace neon glows with elevation shadows */
+[data-theme="light"] .glow-orange { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .glow-cyan { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .glow-green { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .glow-purple { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .glow-red { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
 
-/* Light mode text glow - disable heavy glows */
+/* Remove all text-shadow glows in light mode */
 [data-theme="light"] .text-glow-orange { text-shadow: none; }
 [data-theme="light"] .text-glow-cyan { text-shadow: none; }
 [data-theme="light"] .text-glow-green { text-shadow: none; }
 
-/* Light mode scrollbar */
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+/* Scrollbar — warm neutral */
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.2); }
 
-/* Light mode header glow line - softer */
+/* Header glow line — replaced with a subtle warm gradient border */
 [data-theme="light"] .header-glow-line {
-  opacity: 0.4;
+  opacity: 0.25;
+  background: linear-gradient(90deg, transparent, var(--border), rgba(234, 88, 12, 0.15), var(--border), transparent);
+  animation: none;
 }
 
-/* Light mode range slider */
+/* Range slider — clean with shadow */
+[data-theme="light"] input[type="range"] {
+  background: #e7e5e4;
+}
 [data-theme="light"] input[type="range"]::-webkit-slider-thumb {
-  box-shadow: 0 1px 4px rgba(232, 93, 4, 0.3);
-  border-color: rgba(232, 93, 4, 0.6);
+  background: #ea580c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  border-color: #ea580c;
 }
 
-/* Light React Flow */
+/* React Flow edge labels — white with shadow, not glass */
 [data-theme="light"] .react-flow__edge-textbg {
-  fill: rgba(255, 255, 255, 0.9) !important;
-  stroke: rgba(0, 0, 0, 0.08) !important;
+  fill: rgba(255, 255, 255, 0.95) !important;
+  stroke: var(--border) !important;
 }
+
+/* React Flow controls — white cards with elevation */
 [data-theme="light"] .react-flow__controls {
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  background: white !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
 }
 [data-theme="light"] .react-flow__controls-button {
-  fill: #666 !important;
-  border-bottom-color: rgba(0, 0, 0, 0.06) !important;
+  background: white !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+  fill: #57534e !important;
+  color: #57534e !important;
 }
 [data-theme="light"] .react-flow__controls-button:hover {
-  background: rgba(0, 0, 0, 0.04) !important;
-  fill: #333 !important;
+  background: var(--bg3) !important;
+  fill: #1c1917 !important;
 }
 
-/* Light mode pulse animations - softer */
+/* Disable pulse animations — clean and still */
 [data-theme="light"] .pulse-glow-cyan {
+  animation: none !important;
+}
+
+/* Breathing node: no pulsing glow in light — just static subtle shadow */
+[data-theme="light"] .breathing-node {
   animation: none !important;
 }
 
@@ -168,11 +190,9 @@ code, pre {
   background-size: 60px 60px;
 }
 
-/* Glass effect */
+/* Glass effect — minimal */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
 }
 
@@ -180,19 +200,19 @@ code, pre {
   background: var(--glass-hover);
 }
 
-/* Glow effects */
-.glow-orange { box-shadow: 0 0 20px rgba(249, 115, 22, 0.15), 0 0 40px rgba(249, 115, 22, 0.05); }
-.glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 40px rgba(6, 182, 212, 0.05); }
-.glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.05); }
-.glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), 0 0 40px rgba(168, 85, 247, 0.05); }
-.glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 40px rgba(239, 68, 68, 0.05); }
+/* Glow effects — removed for engineering clarity, clean borders only */
+.glow-orange { box-shadow: none; }
+.glow-cyan { box-shadow: none; }
+.glow-green { box-shadow: none; }
+.glow-purple { box-shadow: none; }
+.glow-red { box-shadow: none; }
 
-/* Neon text */
-.text-glow-orange { text-shadow: 0 0 10px rgba(249, 115, 22, 0.5), 0 0 20px rgba(249, 115, 22, 0.2); }
-.text-glow-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.2); }
-.text-glow-green { text-shadow: 0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.2); }
+/* Neon text — removed */
+.text-glow-orange { text-shadow: none; }
+.text-glow-cyan { text-shadow: none; }
+.text-glow-green { text-shadow: none; }
 
-/* Scanlines overlay */
+/* Scanlines overlay — barely perceptible texture */
 .scanlines::after {
   content: '';
   position: fixed;
@@ -200,15 +220,15 @@ code, pre {
   pointer-events: none;
   z-index: 9999;
   background: repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 2px);
-  opacity: 0.3;
+  opacity: 0.08;
 }
 
-/* Film grain */
+/* Film grain — texture, not noise */
 .grain::before {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.015;
+  opacity: 0.01;
   pointer-events: none;
   z-index: 9998;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -216,13 +236,13 @@ code, pre {
 
 /* ── Animated pulse for nodes ──────────────────────────────── */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.1), 0 0 30px rgba(249, 115, 22, 0.05); }
-  50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.2), 0 0 50px rgba(249, 115, 22, 0.08); }
+  0%, 100% { box-shadow: 0 0 8px rgba(249, 115, 22, 0.05), 0 0 15px rgba(249, 115, 22, 0.02); }
+  50% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.1), 0 0 24px rgba(249, 115, 22, 0.04); }
 }
 
 @keyframes pulse-glow-cyan {
-  0%, 100% { box-shadow: 0 0 12px rgba(6, 182, 212, 0.1); }
-  50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.2); }
+  0%, 100% { box-shadow: 0 0 6px rgba(6, 182, 212, 0.05); }
+  50% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.1); }
 }
 
 /* ── Breathing glow for cost-weighted nodes ───────────────── */
@@ -243,7 +263,7 @@ code, pre {
 }
 
 [data-theme="light"] .shader-bg {
-  opacity: 0.06;
+  opacity: 0.04;
 }
 
 /* ── Particle edge styling ────────────────────────────────── */
@@ -252,7 +272,7 @@ code, pre {
 }
 
 [data-theme="light"] .particle-edge-base {
-  stroke: rgba(8, 145, 178, 0.2) !important;
+  stroke: rgba(8, 145, 178, 0.3) !important;
 }
 
 [data-theme="light"] .particle-edge-particle circle,
@@ -260,7 +280,7 @@ code, pre {
   fill: #0891b2;
 }
 
-/* ── Header glow line ──────────────────────────────────────── */
+/* ── Header glow line — replaced with clean border ────────── */
 @keyframes header-glow-shift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -269,10 +289,9 @@ code, pre {
 
 .header-glow-line {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), var(--accent), transparent);
-  background-size: 200% 100%;
-  animation: header-glow-shift 4s ease-in-out infinite;
-  opacity: 0.6;
+  background: var(--border);
+  animation: none;
+  opacity: 1;
 }
 
 /* ── Stagger entrance ──────────────────────────────────────── */
@@ -312,28 +331,28 @@ code, pre {
   stroke-width: 1 !important;
 }
 
-/* React Flow controls styling */
+/* React Flow controls styling — engineering clarity */
 .react-flow__controls {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid var(--glass-border) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  background: #111318 !important;
+  border: 1px solid #27272a !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }
 
 .react-flow__controls-button {
   background: transparent !important;
   border: none !important;
   border-bottom: 1px solid rgba(255,255,255,0.04) !important;
-  fill: var(--text3) !important;
+  fill: #71717a !important;
+  color: #71717a !important;
   width: 28px !important;
   height: 28px !important;
 }
 
 .react-flow__controls-button:hover {
-  background: rgba(255,255,255,0.06) !important;
-  fill: var(--text) !important;
+  background: #18181b !important;
+  fill: #a1a1aa !important;
+  color: #a1a1aa !important;
 }
 
 .react-flow__controls-button:last-child {
@@ -359,28 +378,75 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4), 0 0 16px rgba(249, 115, 22, 0.15);
-  border: 2px solid rgba(249, 115, 22, 0.8);
-  transition: box-shadow 0.2s;
+  box-shadow: none;
+  border: 2px solid rgba(249, 115, 22, 0.6);
+  transition: border-color 0.2s;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 12px rgba(249, 115, 22, 0.6), 0 0 24px rgba(249, 115, 22, 0.25);
+  border-color: var(--accent);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4), 0 0 16px rgba(249, 115, 22, 0.15);
-  border: 2px solid rgba(249, 115, 22, 0.8);
+  box-shadow: none;
+  border: 2px solid rgba(249, 115, 22, 0.6);
+}
+
+/* ── Custom cursor (flow canvas only) ─────────────────────── */
+.flow-canvas-area { cursor: none; }
+.flow-canvas-area * { cursor: none; }
+
+/* Expand and recolor cursor when hovering a node */
+.cursor-on-node .custom-cursor {
+  width: 32px !important;
+  height: 32px !important;
+  border-color: rgba(249, 115, 22, 0.6) !important;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.15);
+}
+
+/* Light mode: use multiply blend instead of screen */
+[data-theme="light"] .custom-cursor {
+  mix-blend-mode: multiply;
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+[data-theme="light"] .cursor-on-node .custom-cursor {
+  border-color: rgba(234, 88, 12, 0.5) !important;
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.1);
+}
+
+/* ── Connection highlighting transitions ──────────────────── */
+.particle-edge {
+  transition: opacity 0.3s ease;
+}
+
+/* ── Engineering clarity utility classes ───────────────────── */
+
+/* Tabular nums for all data displays */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Terminal-style data display */
+.data-value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.data-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text3);
 }
 
 /* ── Reduced motion ────────────────────────────────────────── */
@@ -404,4 +470,10 @@ input[type="range"]::-moz-range-thumb {
     animation: none !important;
     transform: none !important;
   }
+
+  /* Hide custom cursor */
+  .custom-cursor { display: none; }
+
+  /* Restore default cursor */
+  .flow-canvas-area, .flow-canvas-area * { cursor: auto; }
 }
