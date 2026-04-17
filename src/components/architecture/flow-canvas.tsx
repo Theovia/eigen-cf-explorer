@@ -10,27 +10,46 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react'
 import { Graph, layout } from '@dagrejs/dagre'
+import { MeshGradient } from '@paper-design/shaders-react'
 
 import { ServiceNode, type ServiceNodeType } from './service-node'
+import { ParticleEdge } from './particle-edge'
 import { ARCHITECTURES } from '#/data/architectures'
 import { SERVICES } from '#/data/services'
 import { useExplorerStore } from '#/stores/explorer-store'
+import type { Architecture, ArchitectureEdge, CostBreakdownRow, NormalizedTraffic } from '#/data/types'
 
 import '@xyflow/react/dist/style.css'
 
-// ─── Constants ────────────────────────────────────────────────
-const NODE_WIDTH = 160
+// -- Constants ----
+const NODE_WIDTH = 170
 const NODE_HEIGHT = 80
 
 const nodeTypes = { service: ServiceNode }
+const edgeTypes = { default: ParticleEdge }
 
-// ─── Dagre layout helper ──────────────────────────────────────
+// -- Normalize traffic (same as cost-breakdown) ----
+function normalizeTraffic(traffic: {
+  rps: number
+  storage: number
+  aiCalls: number
+  tenants: number
+}): NormalizedTraffic {
+  return {
+    r: (traffic.rps * 86400 * 30) / 1e6,
+    s: traffic.storage,
+    ai: (traffic.aiCalls * 30) / 1e3,
+    t: traffic.tenants,
+  }
+}
+
+// -- Dagre layout helper ----
 function getLayoutedElements(
   nodes: ServiceNodeType[],
   edges: Edge[],
 ): { nodes: ServiceNodeType[]; edges: Edge[] } {
   const g = new Graph()
-  g.setGraph({ rankdir: 'LR', nodesep: 50, ranksep: 100, marginx: 40, marginy: 40 })
+  g.setGraph({ rankdir: 'LR', nodesep: 60, ranksep: 120, marginx: 50, marginy: 50 })
   g.setDefaultEdgeLabel(() => ({}))
 
   for (const node of nodes) {
@@ -57,28 +76,67 @@ function getLayoutedElements(
   return { nodes: layoutedNodes, edges }
 }
 
-// ─── Derive role for a service in an architecture ─────────────
+// -- Derive role for a service in an architecture ----
 function getServiceRole(archId: string, serviceId: string): string {
-  const arch = ARCHITECTURES.find((a: import('#/data/types').Architecture) => a.id === archId)
+  const arch = ARCHITECTURES.find((a: Architecture) => a.id === archId)
   if (!arch) return ''
   const edge = arch.edges.find(
-    (e: import('#/data/types').ArchitectureEdge) => e.source === serviceId || e.target === serviceId,
+    (e: ArchitectureEdge) => e.source === serviceId || e.target === serviceId,
   )
   return edge?.label ?? ''
 }
 
-// ─── Component ────────────────────────────────────────────────
+// -- Compute cost weights per service (0-1 share of total cost) ----
+function computeCostWeights(
+  arch: Architecture,
+  traffic: { rps: number; storage: number; aiCalls: number; tenants: number },
+): Record<string, number> {
+  const n = normalizeTraffic(traffic)
+  const rows = arch.costBreakdown(n.r, n.s, n.ai, n.t)
+  const total = rows.reduce((sum: number, row: CostBreakdownRow) => sum + row.estimated, 0)
+  if (total <= 0) return {}
+
+  // Map service names from cost rows to service IDs
+  const weights: Record<string, number> = {}
+  for (const row of rows) {
+    // Match cost row service name to our service IDs (case-insensitive partial match)
+    const serviceName = row.service.toLowerCase().replace(/\s+/g, '')
+    for (const svcId of arch.services) {
+      const svc = SERVICES[svcId]
+      if (!svc) continue
+      const svcNameNorm = svc.name.toLowerCase().replace(/\s+/g, '')
+      if (svcNameNorm.includes(serviceName) || serviceName.includes(svcNameNorm)) {
+        // Take the max weight if a service appears in multiple rows
+        const w = row.estimated / total
+        weights[svcId] = Math.max(weights[svcId] ?? 0, w)
+      }
+    }
+  }
+  return weights
+}
+
+// -- Component ----
 interface FlowCanvasProps {
   architectureId: string
 }
 
 export function FlowCanvas({ architectureId }: FlowCanvasProps) {
   const selectedServiceId = useExplorerStore((s) => s.selectedService)
+  const rps = useExplorerStore((s) => s.rps)
+  const storage = useExplorerStore((s) => s.storage)
+  const aiCalls = useExplorerStore((s) => s.aiCalls)
+  const tenants = useExplorerStore((s) => s.tenants)
 
   const arch = useMemo(
-    () => ARCHITECTURES.find((a: import('#/data/types').Architecture) => a.id === architectureId),
+    () => ARCHITECTURES.find((a: Architecture) => a.id === architectureId),
     [architectureId],
   )
+
+  // Compute cost weights reactively
+  const costWeights = useMemo(() => {
+    if (!arch) return {}
+    return computeCostWeights(arch, { rps, storage, aiCalls, tenants })
+  }, [arch, rps, storage, aiCalls, tenants])
 
   // Build nodes from architecture services
   const initialData = useMemo(() => {
@@ -97,32 +155,21 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
           name: svc.name,
           category: svc.cat,
           role: getServiceRole(arch.id, svc.id),
+          costWeight: costWeights[svc.id] ?? 0,
         },
       })
     }
 
-    const rawEdges: Edge[] = arch.edges.map((e: import('#/data/types').ArchitectureEdge, i: number) => ({
+    const rawEdges: Edge[] = arch.edges.map((e: ArchitectureEdge, i: number) => ({
       id: `e-${e.source}-${e.target}-${i}`,
       source: e.source,
       target: e.target,
       label: e.label,
-      animated: true,
-      style: { stroke: '#6b7084', strokeWidth: 1.5 },
-      labelStyle: {
-        fill: '#9ea3b5',
-        fontSize: 10,
-        fontWeight: 500,
-      },
-      labelBgStyle: {
-        fill: '#171a24',
-        fillOpacity: 0.85,
-      },
-      labelBgPadding: [6, 3] as [number, number],
-      labelBgBorderRadius: 4,
+      type: 'default',
     }))
 
     return getLayoutedElements(rawNodes, rawEdges)
-  }, [arch])
+  }, [arch, costWeights])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialData.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData.edges)
@@ -133,7 +180,7 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
     setEdges(initialData.edges)
   }, [initialData, setNodes, setEdges])
 
-  // Update selected state on nodes when selection changes
+  // Update selected state and cost weights on nodes when they change
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) => ({
@@ -141,10 +188,11 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
         data: {
           ...n.data,
           selected: n.data.serviceId === selectedServiceId,
+          costWeight: costWeights[n.data.serviceId] ?? 0,
         },
       })),
     )
-  }, [selectedServiceId, setNodes])
+  }, [selectedServiceId, costWeights, setNodes])
 
   const onInit = useCallback((_instance: ReactFlowInstance<ServiceNodeType, Edge>) => {
     setTimeout(() => _instance.fitView(), 50)
@@ -162,37 +210,57 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
   }
 
   return (
-    <div className="w-full h-full" style={{ minHeight: 400 }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onInit={onInit}
-        nodeTypes={nodeTypes}
-        fitView
-        proOptions={{ hideAttribution: true }}
-        minZoom={0.3}
-        maxZoom={2}
-        defaultEdgeOptions={{ animated: true }}
-        style={{ background: '#0f1117' }}
+    <div className="w-full h-full" style={{ position: 'relative', minHeight: 400 }}>
+      {/* Paper Shaders MeshGradient background — ambient, non-interactive */}
+      <div
+        className="shader-bg"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
-          color="#2a2e3d"
+        <MeshGradient
+          color1="#f97316"
+          color2="#06b6d4"
+          color3="#7c3aed"
+          color4="#050508"
+          speed={0.15}
+          style={{ width: '100%', height: '100%' }}
         />
-        <Controls
-          position="bottom-right"
-          showInteractive={false}
+      </div>
+
+      {/* React Flow on top */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onInit={onInit}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          proOptions={{ hideAttribution: true }}
+          minZoom={0.3}
+          maxZoom={2}
           style={{
-            background: 'var(--bg2)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
+            background: 'transparent',
           }}
-        />
-      </ReactFlow>
+        >
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={24}
+            size={1}
+            color="rgba(255,255,255,0.04)"
+          />
+          <Controls
+            position="bottom-right"
+            showInteractive={false}
+          />
+        </ReactFlow>
+      </div>
     </div>
   )
 }

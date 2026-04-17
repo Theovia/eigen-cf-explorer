@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
 import { useExplorerStore } from '#/stores/explorer-store'
 import { SERVICES } from '#/data/services'
 import { ARCHITECTURES } from '#/data/architectures'
@@ -73,21 +74,73 @@ export function Synthesis() {
   if (recommendedIds.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-5 mt-6 p-5 rounded-xl border border-[var(--accent)]/30 bg-[var(--bg2)]">
-      <h3 className="text-lg font-semibold text-[var(--text)]">
-        Recomendacion
-      </h3>
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="flex flex-col gap-5 mt-6 p-5 rounded-xl"
+      style={{
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(6, 182, 212, 0.15)',
+        boxShadow: '0 0 30px rgba(6, 182, 212, 0.05)',
+      }}
+    >
+      {/* Header with badge */}
+      <div className="flex items-center gap-3">
+        <h3
+          className="text-lg font-bold"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            color: 'var(--text)',
+          }}
+        >
+          Recomendacion
+        </h3>
+        <span
+          className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+          style={{
+            background: 'rgba(6, 182, 212, 0.12)',
+            color: 'var(--cyan)',
+            border: '1px solid rgba(6, 182, 212, 0.2)',
+            boxShadow: '0 0 10px rgba(6, 182, 212, 0.15)',
+          }}
+        >
+          Best Match
+        </span>
+      </div>
 
       {/* Recommended services */}
       <div>
-        <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-2">
+        <h4
+          className="text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            color: 'var(--text3)',
+            fontWeight: 600,
+          }}
+        >
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{
+              background: 'var(--cyan)',
+              boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
+            }}
+          />
           Servicios recomendados
         </h4>
         <div className="flex flex-wrap gap-2">
           {recommendedServices.map((svc: Service) => (
             <span
               key={svc.id}
-              className="px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--bg3)] border border-[var(--border)] text-[var(--text)]"
+              className="px-2.5 py-1 rounded-lg text-xs"
+              style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                background: 'var(--glass-bg)',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--text)',
+              }}
             >
               {svc.name}
             </span>
@@ -98,14 +151,42 @@ export function Synthesis() {
       {/* Best architecture */}
       {bestArch && (
         <div>
-          <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-2">
+          <h4
+            className="text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"
+            style={{
+              fontFamily: '"Chakra Petch", sans-serif',
+              color: 'var(--text3)',
+              fontWeight: 600,
+            }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{
+                background: 'var(--cyan)',
+                boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
+              }}
+            />
             Arquitectura sugerida
           </h4>
-          <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
-            <p className="text-sm font-medium text-[var(--text)]">
+          <div
+            className="p-3 rounded-lg"
+            style={{
+              background: 'rgba(6, 182, 212, 0.04)',
+              border: '1px solid rgba(6, 182, 212, 0.12)',
+            }}
+          >
+            <p
+              className="text-sm font-semibold"
+              style={{
+                color: 'var(--text)',
+                fontFamily: '"Chakra Petch", sans-serif',
+              }}
+            >
               {bestArch.name}
             </p>
-            <p className="text-xs text-[var(--text3)] mt-1">{bestArch.desc}</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text3)' }}>
+              {bestArch.desc}
+            </p>
           </div>
         </div>
       )}
@@ -113,13 +194,34 @@ export function Synthesis() {
       {/* Estimated cost */}
       {bestArch && (
         <div>
-          <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-2">
+          <h4
+            className="text-[10px] uppercase tracking-[0.2em] mb-2 flex items-center gap-2"
+            style={{
+              fontFamily: '"Chakra Petch", sans-serif',
+              color: 'var(--text3)',
+              fontWeight: 600,
+            }}
+          >
+            <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
+              style={{
+                background: 'var(--green)',
+                boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)',
+              }}
+            />
             Costo estimado mensual
           </h4>
-          <p className="text-2xl font-mono font-semibold text-[var(--accent)]">
-            ${estimatedCost.toFixed(2)} USD
+          <p
+            className="text-3xl font-bold"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              color: 'var(--accent)',
+              textShadow: '0 0 15px rgba(249, 115, 22, 0.4)',
+            }}
+          >
+            ${estimatedCost.toFixed(2)} <span className="text-sm font-normal" style={{ color: 'var(--text3)' }}>USD</span>
           </p>
-          <p className="text-xs text-[var(--text3)] mt-1">
+          <p className="text-xs mt-1" style={{ color: 'var(--text3)' }}>
             Basado en los parametros de trafico actuales
           </p>
         </div>
@@ -132,15 +234,18 @@ export function Synthesis() {
             selectArch(bestArch.id)
             void navigate({ to: '/architectures' })
           }}
-          className="
-            self-start px-4 py-2 rounded-lg text-sm font-mono
-            bg-[var(--accent)] text-white
-            hover:brightness-110 transition-all cursor-pointer
-          "
+          className="self-start px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            background: 'var(--accent)',
+            color: 'white',
+            border: '1px solid var(--accent)',
+            boxShadow: '0 0 15px rgba(249, 115, 22, 0.2)',
+          }}
         >
           Ver esta arquitectura &rarr;
         </button>
       )}
-    </div>
+    </motion.div>
   )
 }

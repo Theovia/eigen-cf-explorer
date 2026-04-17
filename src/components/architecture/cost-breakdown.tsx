@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import { ARCHITECTURES } from '#/data/architectures'
 import { useExplorerStore } from '#/stores/explorer-store'
 import type { Architecture, CostBreakdownRow, NormalizedTraffic } from '#/data/types'
 
-// ─── Normalize traffic to monthly scale ───────────────────────
+// -- Normalize traffic to monthly scale ----
 function normalizeTraffic(traffic: {
   rps: number
   storage: number
@@ -18,14 +18,58 @@ function normalizeTraffic(traffic: {
   }
 }
 
-// ─── Format currency ──────────────────────────────────────────
+// -- Format currency ----
 function fmt(n: number): string {
   if (n === 0) return '$0.00'
   if (n < 0.01) return '< $0.01'
   return `$${n.toFixed(2)}`
 }
 
-// ─── Component ────────────────────────────────────────────────
+// -- Animated counter ----
+function AnimatedCost({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value)
+  const prev = useRef(value)
+
+  useEffect(() => {
+    const from = prev.current
+    const to = value
+    prev.current = value
+
+    if (from === to) return
+
+    const duration = 400
+    const start = performance.now()
+
+    function tick(now: number) {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      // ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(from + (to - from) * eased)
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+
+    requestAnimationFrame(tick)
+  }, [value])
+
+  return <>{fmt(display)}</>
+}
+
+// -- Category color dots ----
+const catDotColors: Record<string, string> = {
+  Workers: 'var(--blue)',
+  KV: 'var(--green)',
+  D1: 'var(--green)',
+  R2: 'var(--green)',
+  'Workers AI': 'var(--purple)',
+  'AI Gateway': 'var(--purple)',
+  Vectorize: 'var(--purple)',
+  Queues: 'var(--cyan)',
+  'Durable Objects': 'var(--blue)',
+  Pages: 'var(--blue)',
+}
+
+// -- Component ----
 interface CostBreakdownProps {
   architectureId: string
 }
@@ -63,43 +107,89 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
   }
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div
+      className="w-full overflow-x-auto"
+      style={{
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}
+    >
       <table className="w-full text-xs border-collapse">
         <thead>
           <tr
             className="text-left"
             style={{
-              borderBottom: '1px solid var(--border)',
-              color: 'var(--text2)',
+              borderBottom: '1px solid var(--glass-border)',
+              color: 'var(--text3)',
             }}
           >
-            <th className="py-2 px-3 font-medium">Service</th>
-            <th className="py-2 px-3 font-medium">Role</th>
-            <th className="py-2 px-3 font-medium">Pricing ref</th>
-            <th className="py-2 px-3 font-medium text-right">Est. cost/mo</th>
+            <th
+              className="py-2.5 px-3 font-semibold"
+              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            >
+              Service
+            </th>
+            <th
+              className="py-2.5 px-3 font-semibold"
+              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            >
+              Role
+            </th>
+            <th
+              className="py-2.5 px-3 font-semibold"
+              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            >
+              Pricing ref
+            </th>
+            <th
+              className="py-2.5 px-3 font-semibold text-right"
+              style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}
+            >
+              Est. cost/mo
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row: CostBreakdownRow, i: number) => (
             <tr
               key={`${row.service}-${i}`}
-              className="transition-colors duration-100 hover:brightness-110"
+              className="transition-colors duration-150"
               style={{
-                borderBottom: '1px solid var(--border)',
+                borderBottom: '1px solid var(--glass-border)',
                 color: 'var(--text)',
+                background: i % 2 === 0 ? 'transparent' : 'var(--glass-bg)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--glass-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'var(--glass-bg)'
               }}
             >
-              <td className="py-2 px-3 font-medium">{row.service}</td>
+              <td className="py-2 px-3 font-medium flex items-center gap-2">
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{
+                    background: catDotColors[row.service] ?? 'var(--text3)',
+                    boxShadow: `0 0 4px ${catDotColors[row.service] ?? 'var(--text3)'}60`,
+                  }}
+                />
+                {row.service}
+              </td>
               <td className="py-2 px-3" style={{ color: 'var(--text2)' }}>
                 {row.role}
               </td>
               <td
-                className="py-2 px-3 font-mono text-[10px]"
-                style={{ color: 'var(--text3)' }}
+                className="py-2 px-3 text-[10px]"
+                style={{ fontFamily: '"JetBrains Mono", monospace', color: 'var(--text3)' }}
               >
                 {row.pricingNote}
               </td>
-              <td className="py-2 px-3 text-right font-mono">
+              <td
+                className="py-2 px-3 text-right"
+                style={{ fontFamily: '"JetBrains Mono", monospace' }}
+              >
                 {fmt(row.estimated)}
               </td>
             </tr>
@@ -108,21 +198,29 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
         <tfoot>
           <tr
             style={{
-              borderTop: '2px solid var(--border)',
+              borderTop: '1px solid rgba(34, 197, 94, 0.2)',
             }}
           >
             <td
               colSpan={3}
-              className="py-2.5 px-3 font-semibold text-sm"
-              style={{ color: 'var(--green)' }}
+              className="py-3 px-3 font-bold text-sm"
+              style={{
+                color: 'var(--green)',
+                fontFamily: '"Chakra Petch", sans-serif',
+                textShadow: '0 0 10px rgba(34, 197, 94, 0.3)',
+              }}
             >
               Total estimated monthly cost
             </td>
             <td
-              className="py-2.5 px-3 text-right font-mono font-semibold text-sm"
-              style={{ color: 'var(--green)' }}
+              className="py-3 px-3 text-right font-bold text-sm"
+              style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                color: 'var(--green)',
+                textShadow: '0 0 10px rgba(34, 197, 94, 0.3)',
+              }}
             >
-              {fmt(total)}
+              <AnimatedCost value={total} />
             </td>
           </tr>
         </tfoot>

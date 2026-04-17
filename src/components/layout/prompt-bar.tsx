@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { useExplorerStore } from '#/stores/explorer-store'
 import { SERVICES } from '#/data/services'
 import { ARCHITECTURES } from '#/data/architectures'
@@ -8,6 +8,7 @@ import type { Architecture } from '#/data/types'
 export function PromptBar() {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   const selectedArch = useExplorerStore((s) => s.selectedArch)
   const selectedService = useExplorerStore((s) => s.selectedService)
@@ -30,9 +31,15 @@ export function PromptBar() {
     try {
       await navigator.clipboard.writeText(prompt)
       setCopied(true)
+      // Animate the button
+      if (btnRef.current) {
+        btnRef.current.style.transform = 'scale(0.95)'
+        setTimeout(() => {
+          if (btnRef.current) btnRef.current.style.transform = 'scale(1)'
+        }, 150)
+      }
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // fallback
       const textarea = document.createElement('textarea')
       textarea.value = prompt
       document.body.appendChild(textarea)
@@ -45,11 +52,28 @@ export function PromptBar() {
   }, [prompt])
 
   return (
-    <div className="border-t border-[var(--border)] bg-[var(--bg2)]">
+    <div
+      className="glass"
+      style={{
+        borderTop: '1px solid var(--glass-border)',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderBottom: 'none',
+      }}
+    >
       {/* Expanded view */}
       {expanded && (
-        <div className="max-h-60 overflow-y-auto p-4 border-b border-[var(--border)]">
-          <pre className="text-xs font-mono text-[var(--text2)] whitespace-pre-wrap leading-relaxed">
+        <div
+          className="max-h-60 overflow-y-auto p-4"
+          style={{ borderBottom: '1px solid var(--glass-border)' }}
+        >
+          <pre
+            className="text-xs whitespace-pre-wrap leading-relaxed"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              color: 'var(--text2)',
+            }}
+          >
             {prompt}
           </pre>
         </div>
@@ -58,36 +82,57 @@ export function PromptBar() {
       {/* Bar */}
       <div className="flex items-center gap-3 px-4 py-2.5">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-mono text-[var(--text3)] truncate">
+          <p
+            className="text-xs truncate"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              color: 'var(--text3)',
+            }}
+          >
             {prompt.split('\n')[0]}
           </p>
         </div>
 
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="
-            shrink-0 px-3 py-1.5 rounded text-xs font-mono
-            border border-[var(--border)] text-[var(--text2)]
-            hover:bg-[var(--bg3)] hover:text-[var(--text)]
-            transition-colors cursor-pointer
-          "
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs transition-all duration-200 cursor-pointer"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            fontWeight: 500,
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            color: 'var(--text2)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--glass-hover)'
+            e.currentTarget.style.color = 'var(--text)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--glass-bg)'
+            e.currentTarget.style.color = 'var(--text2)'
+          }}
         >
           {expanded ? 'Cerrar' : 'Ver completo'}
         </button>
 
         <button
+          ref={btnRef}
           onClick={() => void handleCopy()}
-          className={`
-            shrink-0 px-3 py-1.5 rounded text-xs font-mono
-            transition-colors cursor-pointer
-            ${
-              copied
-                ? 'bg-[var(--green)] text-white border border-[var(--green)]'
-                : 'bg-[var(--accent)] text-white border border-[var(--accent)] hover:brightness-110'
-            }
-          `}
+          className="shrink-0 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            background: copied
+              ? 'var(--green)'
+              : 'var(--accent)',
+            color: 'white',
+            border: `1px solid ${copied ? 'var(--green)' : 'var(--accent)'}`,
+            boxShadow: copied
+              ? '0 0 15px rgba(34, 197, 94, 0.3)'
+              : '0 0 15px rgba(249, 115, 22, 0.3)',
+            transform: 'scale(1)',
+          }}
         >
-          {copied ? 'Copiado!' : 'Copiar prompt'}
+          {copied ? '\u2713 Copiado!' : 'Copiar prompt'}
         </button>
       </div>
     </div>

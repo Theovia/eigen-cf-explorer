@@ -38,49 +38,112 @@ export function Sidebar() {
     <div className="flex flex-col gap-6 p-4 overflow-y-auto h-full">
       {/* Architecture presets */}
       <section>
-        <h3 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-3">
+        <h3
+          className="text-[10px] uppercase tracking-[0.2em] mb-3 flex items-center gap-2"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            color: 'var(--text3)',
+            fontWeight: 600,
+          }}
+        >
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{
+              background: 'var(--cyan)',
+              boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
+            }}
+          />
           Arquitecturas de referencia
         </h3>
-        <div className="flex flex-col gap-2">
-          {ARCHITECTURES.map((arch: Architecture) => (
-            <button
-              key={arch.id}
-              onClick={() => {
-                selectArch(arch.id)
-                void navigate({ to: '/architectures' })
-              }}
-              className={`
-                text-left px-3 py-2.5 rounded-lg border transition-all duration-150
-                hover:bg-[var(--bg3)] cursor-pointer
-                ${
-                  selectedArch === arch.id
-                    ? 'border-[var(--accent)] bg-[var(--bg3)]'
-                    : 'border-[var(--border)] bg-transparent'
-                }
-              `}
-            >
-              <span className="block text-sm font-medium text-[var(--text)]">
-                {arch.name}
-              </span>
-              <span className="block text-xs font-mono text-[var(--text3)] mt-0.5">
-                {arch.tag}
-              </span>
-            </button>
-          ))}
+        <div className="flex flex-col gap-2 stagger">
+          {ARCHITECTURES.map((arch: Architecture) => {
+            const isActive = selectedArch === arch.id
+            return (
+              <button
+                key={arch.id}
+                onClick={() => {
+                  selectArch(arch.id)
+                  void navigate({ to: '/architectures' })
+                }}
+                className="text-left px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer"
+                style={{
+                  background: isActive
+                    ? 'rgba(249, 115, 22, 0.06)'
+                    : 'var(--glass-bg)',
+                  border: isActive
+                    ? '1px solid rgba(249, 115, 22, 0.2)'
+                    : '1px solid var(--glass-border)',
+                  borderLeft: isActive
+                    ? '3px solid var(--accent)'
+                    : '3px solid transparent',
+                  boxShadow: isActive
+                    ? '0 0 20px rgba(249, 115, 22, 0.08)'
+                    : 'none',
+                  transform: 'scale(1)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'var(--glass-hover)'
+                    e.currentTarget.style.transform = 'scale(1.01)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'var(--glass-bg)'
+                    e.currentTarget.style.transform = 'scale(1)'
+                  }
+                }}
+              >
+                <span className="block text-sm font-medium" style={{ color: 'var(--text)' }}>
+                  {arch.name}
+                </span>
+                <span
+                  className="block text-[10px] mt-0.5"
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    color: 'var(--text3)',
+                  }}
+                >
+                  {arch.tag}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </section>
 
       {/* Traffic simulator */}
       <section>
-        <h3 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-3">
+        <h3
+          className="text-[10px] uppercase tracking-[0.2em] mb-3 flex items-center gap-2"
+          style={{
+            fontFamily: '"Chakra Petch", sans-serif',
+            color: 'var(--text3)',
+            fontWeight: 600,
+          }}
+        >
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{
+              background: 'var(--cyan)',
+              boxShadow: '0 0 6px rgba(6, 182, 212, 0.5)',
+            }}
+          />
           Simulador de trafico
         </h3>
         <div className="flex flex-col gap-4">
           {sliderConfig.map(({ key, label, min, max, step }) => (
             <div key={key}>
-              <div className="flex justify-between items-baseline mb-1">
-                <label className="text-xs text-[var(--text2)]">{label}</label>
-                <span className="font-mono text-xs text-[var(--accent)]">
+              <div className="flex justify-between items-baseline mb-1.5">
+                <label className="text-xs" style={{ color: 'var(--text2)' }}>{label}</label>
+                <span
+                  className="text-xs font-semibold"
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    color: 'var(--accent)',
+                    textShadow: '0 0 8px rgba(249, 115, 22, 0.3)',
+                  }}
+                >
                   {formatSliderValue(key, trafficValues[key])}
                 </span>
               </div>
@@ -91,7 +154,7 @@ export function Sidebar() {
                 step={step}
                 value={trafficValues[key]}
                 onChange={(e) => updateTraffic(key, Number(e.target.value))}
-                className="w-full accent-[var(--accent)] h-1.5 bg-[var(--bg3)] rounded-full cursor-pointer"
+                className="w-full cursor-pointer"
               />
             </div>
           ))}
