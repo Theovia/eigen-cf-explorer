@@ -1,14 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useExplorerStore } from '#/stores/explorer-store'
-import { architectures } from '#/data/architectures'
+import { ARCHITECTURES } from '#/data/architectures'
+import type { Architecture } from '#/data/types'
 
 export const Route = createFileRoute('/architectures')({
   component: ArchitecturesPage,
 })
 
 function ArchitecturesPage() {
-  const selectedArchId = useExplorerStore((s) => s.selectedArchId)
-  const arch = architectures.find((a) => a.id === selectedArchId) ?? null
+  const selectedArch = useExplorerStore((s) => s.selectedArch)
+  const arch = ARCHITECTURES.find((a: Architecture) => a.id === selectedArch) ?? null
 
   if (!arch) {
     return (
@@ -40,7 +41,7 @@ function ArchitecturesPage() {
             Architecture diagram loading...
           </p>
           <p className="text-xs text-[var(--text3)] mt-2 font-mono">
-            {arch.services.join(' → ')}
+            {arch.services.join(' -> ')}
           </p>
         </div>
       </div>
@@ -51,7 +52,7 @@ function ArchitecturesPage() {
           Pasos
         </h3>
         <ol className="list-decimal list-inside text-sm text-[var(--text2)] space-y-1">
-          {arch.steps.map((step, i) => (
+          {arch.steps.map((step: string, i: number) => (
             <li key={i}>{step}</li>
           ))}
         </ol>

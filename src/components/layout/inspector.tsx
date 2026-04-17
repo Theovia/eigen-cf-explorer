@@ -1,5 +1,6 @@
 import { useExplorerStore } from '#/stores/explorer-store'
-import { services } from '#/data/services'
+import { SERVICES } from '#/data/services'
+import type { Service, ServiceLimit, VsComparison } from '#/data/types'
 
 const catColors: Record<string, string> = {
   compute: 'bg-[var(--blue)]',
@@ -18,10 +19,10 @@ const catLabels: Record<string, string> = {
 }
 
 export function Inspector() {
-  const selectedServiceId = useExplorerStore((s) => s.selectedServiceId)
+  const selectedService = useExplorerStore((s) => s.selectedService)
 
-  const service = selectedServiceId
-    ? services.find((s) => s.id === selectedServiceId) ?? null
+  const service: Service | null = selectedService
+    ? SERVICES[selectedService] ?? null
     : null
 
   if (!service) {
@@ -55,11 +56,11 @@ export function Inspector() {
       {service.limits.length > 0 && (
         <div>
           <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)] mb-2">
-            Límites
+            Limites
           </h4>
           <table className="w-full text-xs">
             <tbody>
-              {service.limits.map((limit, i) => (
+              {service.limits.map((limit: ServiceLimit, i: number) => (
                 <tr
                   key={i}
                   className="border-b border-[var(--border)] last:border-0"
@@ -88,7 +89,7 @@ export function Inspector() {
       {/* When to use */}
       <div className="rounded-lg border border-[var(--green)]/30 bg-[var(--green)]/5 p-3">
         <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--green)] mb-1.5">
-          Cuándo usar
+          Cuando usar
         </h4>
         <p className="text-sm text-[var(--text2)] leading-relaxed">
           {service.use}
@@ -98,7 +99,7 @@ export function Inspector() {
       {/* When NOT to use */}
       <div className="rounded-lg border border-[var(--red)]/30 bg-[var(--red)]/5 p-3">
         <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--red)] mb-1.5">
-          Cuándo NO usar
+          Cuando NO usar
         </h4>
         <p className="text-sm text-[var(--text2)] leading-relaxed">
           {service.notUse}
@@ -121,7 +122,7 @@ export function Inspector() {
           <h4 className="font-mono text-xs uppercase tracking-widest text-[var(--text3)]">
             Comparaciones
           </h4>
-          {service.vs.map((vs, i) => (
+          {service.vs.map((vs: VsComparison, i: number) => (
             <div
               key={i}
               className="rounded-lg border border-[var(--cyan)]/30 bg-[var(--cyan)]/5 p-3"
@@ -144,7 +145,7 @@ export function Inspector() {
         rel="noopener noreferrer"
         className="text-sm font-mono text-[var(--accent)] hover:underline mt-auto pb-2"
       >
-        Documentación &rarr;
+        Documentacion &rarr;
       </a>
     </div>
   )

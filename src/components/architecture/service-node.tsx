@@ -31,10 +31,10 @@ export type ServiceNodeType = Node<ServiceNodeData, 'service'>
 // ─── Component ────────────────────────────────────────────────
 export function ServiceNode({ data }: NodeProps<ServiceNodeType>) {
   const { serviceId, name, category, role } = data
-  const selectedServiceId = useExplorerStore((s) => s.selectedServiceId)
+  const selectedService = useExplorerStore((s) => s.selectedService)
   const selectService = useExplorerStore((s) => s.selectService)
 
-  const isSelected = selectedServiceId === serviceId
+  const isSelected = selectedService === serviceId
   const catColor = CAT_COLORS[category] ?? 'var(--text3)'
   const catBg = CAT_BG[category] ?? 'rgba(107,112,132,0.15)'
 

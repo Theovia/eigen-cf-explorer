@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useExplorerStore } from '#/stores/explorer-store'
-import { services } from '#/data/services'
+import { SERVICES } from '#/data/services'
+import type { Service } from '#/data/types'
 import { CatalogFilters } from './catalog-filters'
 
 const catColors: Record<string, string> = {
@@ -19,16 +20,18 @@ const catLabels: Record<string, string> = {
   integration: 'Integration',
 }
 
+const allServices: Service[] = Object.values(SERVICES)
+
 export function CatalogGrid() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
 
-  const selectedServiceId = useExplorerStore((s) => s.selectedServiceId)
+  const selectedService = useExplorerStore((s) => s.selectedService)
   const selectService = useExplorerStore((s) => s.selectService)
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase().trim()
-    return services.filter((svc) => {
+    return allServices.filter((svc: Service) => {
       // Category filter
       if (category !== 'all' && svc.cat !== category) return false
       // Text search
@@ -64,7 +67,7 @@ export function CatalogGrid() {
 
       {/* Grid */}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
-        {filtered.map((svc) => (
+        {filtered.map((svc: Service) => (
           <button
             key={svc.id}
             onClick={() => selectService(svc.id)}
@@ -72,7 +75,7 @@ export function CatalogGrid() {
               text-left p-3 rounded-lg border transition-all duration-150
               hover:bg-[var(--bg3)] cursor-pointer
               ${
-                selectedServiceId === svc.id
+                selectedService === svc.id
                   ? 'border-[var(--accent)] bg-[var(--bg3)]'
                   : 'border-[var(--border)] bg-[var(--bg2)]'
               }

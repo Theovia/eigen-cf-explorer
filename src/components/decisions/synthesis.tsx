@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useExplorerStore } from '#/stores/explorer-store'
-import { services } from '#/data/services'
-import { architectures } from '#/data/architectures'
-import { decisions } from '#/data/decisions'
-import type { Architecture, NormalizedTraffic } from '#/data/types'
+import { SERVICES } from '#/data/services'
+import { ARCHITECTURES } from '#/data/architectures'
+import { DECISIONS } from '#/data/decisions'
+import type { Architecture, Service } from '#/data/types'
+import type { NormalizedTraffic } from '#/data/types'
 
 function normalizeTraffic(rps: number, storage: number, aiCalls: number, tenants: number): NormalizedTraffic {
   return {
@@ -16,16 +17,21 @@ function normalizeTraffic(rps: number, storage: number, aiCalls: number, tenants
 }
 
 export function Synthesis() {
-  const answers = useExplorerStore((s) => s.answers)
-  const traffic = useExplorerStore((s) => s.traffic)
+  const decisionAnswers = useExplorerStore((s) => s.decisionAnswers)
+  const rps = useExplorerStore((s) => s.rps)
+  const storage = useExplorerStore((s) => s.storage)
+  const aiCalls = useExplorerStore((s) => s.aiCalls)
+  const tenants = useExplorerStore((s) => s.tenants)
   const selectArch = useExplorerStore((s) => s.selectArch)
   const navigate = useNavigate()
 
   // Collect all recommended service IDs (deduped)
   const recommendedIds = useMemo(() => {
     const ids = new Set<string>()
-    for (const [qIdx, optIdx] of Object.entries(answers)) {
-      const decision = decisions[Number(qIdx)]
+    for (let qIdx = 0; qIdx < decisionAnswers.length; qIdx++) {
+      const optIdx = decisionAnswers[qIdx]
+      if (optIdx === undefined) continue
+      const decision = DECISIONS[qIdx]
       if (!decision) continue
       const option = decision.options[optIdx]
       if (!option) continue
@@ -35,15 +41,15 @@ export function Synthesis() {
       }
     }
     return Array.from(ids)
-  }, [answers])
+  }, [decisionAnswers])
 
   // Find best matching architecture (max overlap)
   const bestArch = useMemo((): Architecture | null => {
     if (recommendedIds.length === 0) return null
     let best: Architecture | null = null
     let bestScore = 0
-    for (const arch of architectures) {
-      const overlap = arch.services.filter((s) => recommendedIds.includes(s)).length
+    for (const arch of ARCHITECTURES) {
+      const overlap = arch.services.filter((s: string) => recommendedIds.includes(s)).length
       if (overlap > bestScore) {
         bestScore = overlap
         best = arch
@@ -55,12 +61,12 @@ export function Synthesis() {
   // Estimated cost
   const estimatedCost = useMemo(() => {
     if (!bestArch) return 0
-    const n = normalizeTraffic(traffic.rps, traffic.storage, traffic.aiCalls, traffic.tenants)
+    const n = normalizeTraffic(rps, storage, aiCalls, tenants)
     return bestArch.costFormula(n.r, n.s, n.ai, n.t)
-  }, [bestArch, traffic])
+  }, [bestArch, rps, storage, aiCalls, tenants])
 
   const recommendedServices = useMemo(
-    () => services.filter((s) => recommendedIds.includes(s.id)),
+    () => Object.values(SERVICES).filter((s: Service) => recommendedIds.includes(s.id)),
     [recommendedIds],
   )
 
@@ -69,7 +75,7 @@ export function Synthesis() {
   return (
     <div className="flex flex-col gap-5 mt-6 p-5 rounded-xl border border-[var(--accent)]/30 bg-[var(--bg2)]">
       <h3 className="text-lg font-semibold text-[var(--text)]">
-        Recomendación
+        Recomendacion
       </h3>
 
       {/* Recommended services */}
@@ -78,7 +84,7 @@ export function Synthesis() {
           Servicios recomendados
         </h4>
         <div className="flex flex-wrap gap-2">
-          {recommendedServices.map((svc) => (
+          {recommendedServices.map((svc: Service) => (
             <span
               key={svc.id}
               className="px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--bg3)] border border-[var(--border)] text-[var(--text)]"
@@ -114,7 +120,7 @@ export function Synthesis() {
             ${estimatedCost.toFixed(2)} USD
           </p>
           <p className="text-xs text-[var(--text3)] mt-1">
-            Basado en los parámetros de tráfico actuales
+            Basado en los parametros de trafico actuales
           </p>
         </div>
       )}

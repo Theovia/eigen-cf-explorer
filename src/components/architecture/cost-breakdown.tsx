@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { architectures } from '#/data/architectures'
+import { ARCHITECTURES } from '#/data/architectures'
 import { useExplorerStore } from '#/stores/explorer-store'
-import type { CostBreakdownRow, NormalizedTraffic } from '#/data/types'
+import type { Architecture, CostBreakdownRow, NormalizedTraffic } from '#/data/types'
 
 // ─── Normalize traffic to monthly scale ───────────────────────
 function normalizeTraffic(traffic: {
@@ -31,22 +31,25 @@ interface CostBreakdownProps {
 }
 
 export function CostBreakdown({ architectureId }: CostBreakdownProps) {
-  const traffic = useExplorerStore((s) => s.traffic)
+  const rps = useExplorerStore((s) => s.rps)
+  const storage = useExplorerStore((s) => s.storage)
+  const aiCalls = useExplorerStore((s) => s.aiCalls)
+  const tenants = useExplorerStore((s) => s.tenants)
 
   const arch = useMemo(
-    () => architectures.find((a) => a.id === architectureId),
+    () => ARCHITECTURES.find((a: Architecture) => a.id === architectureId),
     [architectureId],
   )
 
   const { rows, total } = useMemo(() => {
     if (!arch) return { rows: [] as CostBreakdownRow[], total: 0 }
 
-    const n = normalizeTraffic(traffic)
+    const n = normalizeTraffic({ rps, storage, aiCalls, tenants })
     const rows = arch.costBreakdown(n.r, n.s, n.ai, n.t)
-    const total = rows.reduce((sum, row) => sum + row.estimated, 0)
+    const total = rows.reduce((sum: number, row: CostBreakdownRow) => sum + row.estimated, 0)
 
     return { rows, total }
-  }, [arch, traffic])
+  }, [arch, rps, storage, aiCalls, tenants])
 
   if (!arch) {
     return (
@@ -77,7 +80,7 @@ export function CostBreakdown({ architectureId }: CostBreakdownProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
+          {rows.map((row: CostBreakdownRow, i: number) => (
             <tr
               key={`${row.service}-${i}`}
               className="transition-colors duration-100 hover:brightness-110"

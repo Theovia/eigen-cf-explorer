@@ -1,31 +1,30 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useExplorerStore } from '#/stores/explorer-store'
-import { services } from '#/data/services'
-import { architectures } from '#/data/architectures'
+import { SERVICES } from '#/data/services'
+import { ARCHITECTURES } from '#/data/architectures'
 import { buildPrompt } from '#/lib/prompt-builder'
+import type { Architecture } from '#/data/types'
 
 export function PromptBar() {
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const selectedArchId = useExplorerStore((s) => s.selectedArchId)
-  const traffic = useExplorerStore((s) => s.traffic)
+  const selectedArch = useExplorerStore((s) => s.selectedArch)
+  const selectedService = useExplorerStore((s) => s.selectedService)
+  const rps = useExplorerStore((s) => s.rps)
+  const storage = useExplorerStore((s) => s.storage)
+  const aiCalls = useExplorerStore((s) => s.aiCalls)
+  const tenants = useExplorerStore((s) => s.tenants)
 
   const arch = useMemo(
-    () => architectures.find((a) => a.id === selectedArchId) ?? null,
-    [selectedArchId],
+    () => ARCHITECTURES.find((a: Architecture) => a.id === selectedArch) ?? null,
+    [selectedArch],
   )
 
-  const prompt = useMemo(
-    () =>
-      buildPrompt({
-        arch,
-        services,
-        traffic,
-        selectedServices: arch?.services,
-      }),
-    [arch, traffic],
-  )
+  const prompt = useMemo(() => {
+    if (!arch) return '# Selecciona una arquitectura para generar el prompt'
+    return buildPrompt(arch, SERVICES, { rps, storage, aiCalls, tenants }, selectedService)
+  }, [arch, rps, storage, aiCalls, tenants, selectedService])
 
   const handleCopy = useCallback(async () => {
     try {

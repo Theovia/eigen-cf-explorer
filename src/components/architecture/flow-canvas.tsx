@@ -12,8 +12,8 @@ import {
 import { Graph, layout } from '@dagrejs/dagre'
 
 import { ServiceNode, type ServiceNodeType } from './service-node'
-import { architectures } from '#/data/architectures'
-import { services as allServices } from '#/data/services'
+import { ARCHITECTURES } from '#/data/architectures'
+import { SERVICES } from '#/data/services'
 import { useExplorerStore } from '#/stores/explorer-store'
 
 import '@xyflow/react/dist/style.css'
@@ -59,10 +59,10 @@ function getLayoutedElements(
 
 // ─── Derive role for a service in an architecture ─────────────
 function getServiceRole(archId: string, serviceId: string): string {
-  const arch = architectures.find((a) => a.id === archId)
+  const arch = ARCHITECTURES.find((a: import('#/data/types').Architecture) => a.id === archId)
   if (!arch) return ''
   const edge = arch.edges.find(
-    (e) => e.source === serviceId || e.target === serviceId,
+    (e: import('#/data/types').ArchitectureEdge) => e.source === serviceId || e.target === serviceId,
   )
   return edge?.label ?? ''
 }
@@ -73,10 +73,10 @@ interface FlowCanvasProps {
 }
 
 export function FlowCanvas({ architectureId }: FlowCanvasProps) {
-  const selectedServiceId = useExplorerStore((s) => s.selectedServiceId)
+  const selectedServiceId = useExplorerStore((s) => s.selectedService)
 
   const arch = useMemo(
-    () => architectures.find((a) => a.id === architectureId),
+    () => ARCHITECTURES.find((a: import('#/data/types').Architecture) => a.id === architectureId),
     [architectureId],
   )
 
@@ -84,11 +84,9 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
   const initialData = useMemo(() => {
     if (!arch) return { nodes: [] as ServiceNodeType[], edges: [] as Edge[] }
 
-    const svcMap = new Map(allServices.map((s) => [s.id, s]))
-
     const rawNodes: ServiceNodeType[] = []
     for (const svcId of arch.services) {
-      const svc = svcMap.get(svcId)
+      const svc = SERVICES[svcId]
       if (!svc) continue
       rawNodes.push({
         id: svc.id,
@@ -103,7 +101,7 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
       })
     }
 
-    const rawEdges: Edge[] = arch.edges.map((e, i) => ({
+    const rawEdges: Edge[] = arch.edges.map((e: import('#/data/types').ArchitectureEdge, i: number) => ({
       id: `e-${e.source}-${e.target}-${i}`,
       source: e.source,
       target: e.target,
@@ -148,8 +146,8 @@ export function FlowCanvas({ architectureId }: FlowCanvasProps) {
     )
   }, [selectedServiceId, setNodes])
 
-  const onInit = useCallback((instance: ReactFlowInstance<ServiceNodeType, Edge>) => {
-    setTimeout(() => instance.fitView(), 50)
+  const onInit = useCallback((_instance: ReactFlowInstance<ServiceNodeType, Edge>) => {
+    setTimeout(() => _instance.fitView(), 50)
   }, [])
 
   if (!arch) {
