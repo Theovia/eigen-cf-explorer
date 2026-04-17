@@ -9,8 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DecisionsRouteImport } from './routes/decisions'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as ArchitecturesRouteImport } from './routes/architectures'
 import { Route as IndexRouteImport } from './routes/index'
 
+const DecisionsRoute = DecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArchitecturesRoute = ArchitecturesRouteImport.update({
+  id: '/architectures',
+  path: '/architectures',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +37,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/architectures': typeof ArchitecturesRoute
+  '/catalog': typeof CatalogRoute
+  '/decisions': typeof DecisionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/architectures': typeof ArchitecturesRoute
+  '/catalog': typeof CatalogRoute
+  '/decisions': typeof DecisionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/architectures': typeof ArchitecturesRoute
+  '/catalog': typeof CatalogRoute
+  '/decisions': typeof DecisionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/architectures' | '/catalog' | '/decisions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/architectures' | '/catalog' | '/decisions'
+  id: '__root__' | '/' | '/architectures' | '/catalog' | '/decisions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArchitecturesRoute: typeof ArchitecturesRoute
+  CatalogRoute: typeof CatalogRoute
+  DecisionsRoute: typeof DecisionsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/decisions': {
+      id: '/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof DecisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/architectures': {
+      id: '/architectures'
+      path: '/architectures'
+      fullPath: '/architectures'
+      preLoaderRoute: typeof ArchitecturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,16 +104,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArchitecturesRoute: ArchitecturesRoute,
+  CatalogRoute: CatalogRoute,
+  DecisionsRoute: DecisionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

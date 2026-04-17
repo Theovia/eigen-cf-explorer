@@ -1,0 +1,113 @@
+// Stub — will be replaced by data-agent with full architecture catalog
+import type { Architecture } from './types'
+
+export const architectures: Architecture[] = [
+  {
+    id: 'api-simple',
+    name: 'API Simple',
+    tag: 'REST · CRUD · Auth',
+    desc: 'Worker + D1 + KV para APIs REST con autenticación y caching.',
+    services: ['workers', 'd1', 'kv'],
+    flow: 'Client → Worker → D1 / KV',
+    steps: [
+      'Worker recibe request y valida auth',
+      'Consulta KV para cache hit',
+      'Si miss, consulta D1',
+      'Responde con headers de cache',
+    ],
+    edges: [
+      { source: 'workers', target: 'd1', label: 'SQL queries' },
+      { source: 'workers', target: 'kv', label: 'cache read/write' },
+    ],
+    costFormula: (r, s, _ai, _t) => r * 0.30 + s * 0.001 + 5,
+    costBreakdown: (r, s, _ai, _t) => [
+      { service: 'Workers', role: 'API compute', estimated: r * 0.30, pricingNote: '$0.30/M req' },
+      { service: 'D1', role: 'Database', estimated: s * 0.001, pricingNote: '$0.001/M reads' },
+      { service: 'KV', role: 'Cache', estimated: 5, pricingNote: '$5 base' },
+    ],
+  },
+  {
+    id: 'rag-chatbot',
+    name: 'RAG Chatbot',
+    tag: 'AI · Embeddings · Chat',
+    desc: 'Workers AI + Vectorize + D1 para chatbot con RAG.',
+    services: ['workers', 'ai', 'vectorize', 'd1', 'r2'],
+    flow: 'Client → Worker → AI (embed) → Vectorize → AI (generate)',
+    steps: [
+      'Worker recibe pregunta del usuario',
+      'Genera embedding con Workers AI',
+      'Busca contexto en Vectorize',
+      'Genera respuesta con LLM + contexto',
+      'Guarda conversación en D1',
+    ],
+    edges: [
+      { source: 'workers', target: 'ai', label: 'embed + generate' },
+      { source: 'workers', target: 'vectorize', label: 'similarity search' },
+      { source: 'workers', target: 'd1', label: 'conversation log' },
+      { source: 'workers', target: 'r2', label: 'document storage' },
+    ],
+    costFormula: (r, s, ai, _t) => r * 0.30 + ai * 0.10 + s * 0.015 + 5,
+    costBreakdown: (r, s, ai, _t) => [
+      { service: 'Workers', role: 'Orchestrator', estimated: r * 0.30, pricingNote: '$0.30/M req' },
+      { service: 'Workers AI', role: 'Inference', estimated: ai * 0.10, pricingNote: 'Per-neuron' },
+      { service: 'Vectorize', role: 'Search', estimated: 2, pricingNote: '$0.040/M stored' },
+      { service: 'R2', role: 'Docs', estimated: s * 0.015, pricingNote: '$0.015/GB/mo' },
+      { service: 'D1', role: 'Log', estimated: 1, pricingNote: 'Minimal writes' },
+    ],
+  },
+  {
+    id: 'saas-multitenant',
+    name: 'SaaS Multi-tenant',
+    tag: 'Multi-tenant · Auth · Queue',
+    desc: 'Durable Objects + D1 + Queues para SaaS multi-tenant.',
+    services: ['workers', 'durable-objects', 'd1', 'kv', 'queues', 'r2', 'access'],
+    flow: 'Client → Access → Worker → DO (tenant state) → D1',
+    steps: [
+      'Access valida identidad del tenant',
+      'Worker rutea al Durable Object del tenant',
+      'DO maneja estado y lógica de negocio',
+      'D1 persiste datos relacionales',
+      'Queues procesa jobs en background',
+    ],
+    edges: [
+      { source: 'access', target: 'workers', label: 'auth' },
+      { source: 'workers', target: 'durable-objects', label: 'tenant routing' },
+      { source: 'durable-objects', target: 'd1', label: 'persistence' },
+      { source: 'workers', target: 'queues', label: 'async jobs' },
+      { source: 'workers', target: 'r2', label: 'file storage' },
+    ],
+    costFormula: (r, s, _ai, t) => r * 0.30 + t * 2 + s * 0.015 + 10,
+    costBreakdown: (r, s, _ai, t) => [
+      { service: 'Workers', role: 'Router', estimated: r * 0.30, pricingNote: '$0.30/M req' },
+      { service: 'Durable Objects', role: 'Tenant state', estimated: t * 2, pricingNote: '$0.15/M req + duration' },
+      { service: 'D1', role: 'Database', estimated: 5, pricingNote: 'Per tenant DB' },
+      { service: 'R2', role: 'Files', estimated: s * 0.015, pricingNote: '$0.015/GB/mo' },
+      { service: 'Access', role: 'Auth', estimated: 0, pricingNote: 'Free 50 users' },
+      { service: 'Queues', role: 'Jobs', estimated: 1, pricingNote: '$0.40/M messages' },
+    ],
+  },
+  {
+    id: 'static-jamstack',
+    name: 'JAMstack Site',
+    tag: 'Static · SSR · CDN',
+    desc: 'Pages + KV + R2 para sitios estáticos con funciones serverless.',
+    services: ['pages', 'kv', 'r2'],
+    flow: 'Client → CDN → Pages → KV',
+    steps: [
+      'CDN sirve assets estáticos',
+      'Pages Functions maneja rutas dinámicas',
+      'KV almacena datos de configuración',
+      'R2 almacena media uploads',
+    ],
+    edges: [
+      { source: 'pages', target: 'kv', label: 'dynamic data' },
+      { source: 'pages', target: 'r2', label: 'media storage' },
+    ],
+    costFormula: (r, s) => r * 0.05 + s * 0.015 + 0,
+    costBreakdown: (r, s) => [
+      { service: 'Pages', role: 'Hosting', estimated: 0, pricingNote: 'Free tier' },
+      { service: 'KV', role: 'Data', estimated: r * 0.05, pricingNote: '$0.50/M reads' },
+      { service: 'R2', role: 'Media', estimated: s * 0.015, pricingNote: '$0.015/GB/mo' },
+    ],
+  },
+]
